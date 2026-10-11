@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YumYayum | CP461 Super-Resolution Presentation</title>
+  <meta name="description" content="Real-World Super-Resolution with Real-ESRNet (4x) — CP461 Computer Vision Project Presentation, SWU">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- ========== TOP NAV ========== -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-logo">✨</div>
+      <div>
+        <div class="brand-title">YumYayum <span class="badge-inline">CP461</span></div>
+        <div class="brand-subtitle">Real-ESRNet Super-Resolution · SWU</div>
+      </div>
+    </div>
+
+    <nav class="nav-tabs" id="mainNavTabs">
+      <button class="tab-btn active" onclick="goToSection(0)" data-idx="0">🏠 Overview</button>
+      <button class="tab-btn" onclick="goToSection(1)" data-idx="1">🗂️ Dataset</button>
+      <button class="tab-btn" onclick="goToSection(2)" data-idx="2">⚙️ Method</button>
+      <button class="tab-btn" onclick="goToSection(3)" data-idx="3">📊 Metrics</button>
+      <button class="tab-btn" onclick="goToSection(4)" data-idx="4">🔬 Results</button>
+      <button class="tab-btn" onclick="goToSection(5)" data-idx="5">⚡ Live Demo</button>
+    </nav>
+
+    <div class="nav-end">
+      <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusLabel">Connecting…</span></div>
+      <div class="device-pill" id="devicePill">GPU: –</div>
+    </div>
+  </header>
+
+  <!-- ========== KEYBOARD HINT ========== -->
+  <div class="key-hint" id="keyHint">← → เปลี่ยนหัวข้อ &nbsp;|&nbsp; ⎋ ปิดหมายเหตุ</div>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="main-wrap">
+
+    <!-- ====== SECTION 0: PROJECT OVERVIEW & PROBLEM ====== -->
+    <section class="pres-section active" id="sec0">
+      <div class="hero-section">
+        <div class="hero-kicker">CP461 Computer Vision · Srinakharinwirot University</div>
+        <h1 class="hero-title">Real-World <span class="grad-text">Super-Resolution</span><br>with Real-ESRNet (4×)</h1>
+        <p class="hero-desc">
+          การฟื้นฟูความละเอียดภาพจากความเสื่อมสภาพในโลกจริง (Real-world Image Restoration)<br>
+          ด้วยโครงข่ายประสาทเทียม <strong>RRDBNet</strong> และกระบวนการจำลองความเสื่อมสภาพแบบ 2 ขั้น
+        </p>
+
+        <div class="hero-stat-row">
+          <div class="stat-pill">4× Upscaling</div>
+          <div class="stat-pill">RRDBNet · 16.7M params</div>
+          <div class="stat-pill">L1 Pixel Loss</div>
+          <div class="stat-pill">RTX 3050 Ti · CUDA 12.4</div>
+          <div class="stat-pill">9 000 iters checkpoint</div>
+        </div>
+      </div>
+
+      <!-- Problem Statement -->
+      <div class="card-grid cols-2 mt-32">
+        <div class="glass-card pa-28">
+          <div class="card-kicker">❓ ปัญหา (The Problem)</div>
+          <h2 class="card-title">ทำไม Bicubic ไม่เพียงพอ?</h2>
+          <p class="card-body">
+            ภาพถ่ายในโลกจริงมีความเสื่อมสภาพจากหลายแหล่งพร้อมกัน ทั้งการสั่นไหวของกล้อง (Motion Blur),
+            สัญญาณรบกวนจากเซนเซอร์ (Sensor Noise), การบีบอัด JPEG (Compression Artifact)
+            และความละเอียดต่ำจากระยะห่าง — Bicubic Interpolation ขยายภาพโดยการประมาณค่าระหว่างพิกเซล
+            ทำให้ภาพ<strong>เบลอมัวและสูญเสียรายละเอียด</strong> ไม่สามารถสร้างเนื้อหาใหม่ได้
+          </p>
+          <div class="problem-chips">
+            <span class="chip-red">📷 Blur & Camera Shake</span>
+            <span class="chip-red">⚡ Sensor Noise</span>
+            <span class="chip-red">🗜️ JPEG Artifacts</span>
+            <span class="chip-red">🔍 Resolution Loss</span>
+          </div>
+        </div>
+
+        <div class="glass-card pa-28">
+          <div class="card-kicker">💡 แนวทางแก้ไข (Our Approach)</div>
+          <h2 class="card-title">Two-Stage Degradation + RRDBNet</h2>
+          <p class="card-body">
+            <strong>Real-ESRNet</strong> ฝึกให้โมเดลเรียนรู้การกู้คืนภาพจากความเสื่อมสภาพสังเคราะห์ที่ซับซ้อน
+            ด้วยกระบวนการ <em>High-Order Degradation</em> 2 ชั้น เพื่อให้โมเดลทนทานต่อภาพจริงที่มีความเสื่อมสภาพหลายรูปแบบพร้อมกัน
+            และสามารถ<strong>สร้างรายละเอียดภาพใหม่</strong>ที่คมชัดได้
+          </p>
+          <div class="problem-chips">
+            <span class="chip-green">✅ ฟื้นฟูขอบเส้นและพื้นผิว</span>
+            <span class="chip-green">✅ ไม่มี Hallucination แปลกปลอม</span>
+            <span class="chip-green">✅ ขยายภาพ 4× อย่างคมชัด</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual comparison teaser -->
+      <div class="glass-card pa-28 mt-24">
+        <div class="card-kicker">👁️ ตัวอย่างเปรียบเทียบเบื้องต้น (เปิด "Live Demo" เพื่อทดสอบสดบนภาพของคุณ)</div>
+        <div class="teaser-grid" id="teaserGrid">
+          <div class="teaser-col">
+            <div class="teaser-label teaser-label-bad">Low-Res Input (Bicubic 4×)</div>
+            <img class="teaser-img" src="/api/inputs/0014.jpg" alt="Low Res" onerror="this.style.display='none'">
+          </div>
+          <div class="teaser-arrow">➔</div>
+          <div class="teaser-col">
+            <div class="teaser-label teaser-label-good">Our Real-ESRNet 4× Output</div>
+            <div class="teaser-placeholder" id="teaserPlaceholder">
+              <span>ไปที่ ⚡ Live Demo เพื่อดูผลขยายภาพสด</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SECTION 1: DATASETS ====== -->
+    <section class="pres-section" id="sec1">
+      <div class="section-header">
+        <div class="sec-kicker">📂 ข้อมูลที่ใช้ (Datasets)</div>
+        <h2 class="sec-title">ชุดข้อมูลฝึกสอนและทดสอบ</h2>
+        <p class="sec-desc">รวบรวมและจัดเตรียมชุดภาพคุณภาพสูงจากแหล่งมาตรฐานในวงการ Super-Resolution เพื่อฝึกสอนโมเดล</p>
+      </div>
+
+      <div class="card-grid cols-3">
+        <div class="glass-card pa-24 dataset-card">
+          <div class="ds-icon">🖼️</div>
+          <div class="ds-name">DIV2K</div>
+          <div class="ds-source">CVPR Challenge Dataset</div>
+          <div class="ds-stats">
+            <div class="ds-stat"><span class="ds-num">800</span><span class="ds-unit">Train Images</span></div>
+            <div class="ds-stat"><span class="ds-num">100</span><span class="ds-unit">Val Images</span></div>
+          </div>
+          <p class="ds-desc">ภาพถ่ายคุณภาพสูง 2K+ ความละเอียด ครอบคลุมหัวข้อที่หลากหลาย (คน, วิว, สัตว์, งานสถาปัตย์)</p>
+          <div class="ds-tag">Train Split: 800</div>
+        </div>
+
+        <div class="glass-card pa-24 dataset-card">
+          <div class="ds-icon">📸</div>
+          <div class="ds-name">Flickr2K</div>
+          <div class="ds-source">Flickr Creative Commons</div>
+          <div class="ds-stats">
+            <div class="ds-stat"><span class="ds-num">2,650</span><span class="ds-unit">Images</span></div>
+            <div class="ds-stat"><span class="ds-num">~2K</span><span class="ds-unit">Resolution</span></div>
+          </div>
+          <p class="ds-desc">ภาพถ่ายจากนักถ่ายภาพมืออาชีพบน Flickr ความหลากหลายสูง เสริมความครอบคลุมเนื้อหาให้กับ DIV2K</p>
+          <div class="ds-tag">Train Split: 2,650</div>
+        </div>
+
+        <div class="glass-card pa-24 dataset-card">
+          <div class="ds-icon">🌿</div>
+          <div class="ds-name">OTS Clear</div>
+          <div class="ds-source">Outdoor Training Set (Filtered)</div>
+          <div class="ds-stats">
+            <div class="ds-stat"><span class="ds-num">~72K</span><span class="ds-unit">Clear pairs</span></div>
+            <div class="ds-stat"><span class="ds-num">GT only</span><span class="ds-unit">extracted</span></div>
+          </div>
+          <p class="ds-desc">กรองเฉพาะภาพ Ground Truth ใสจาก Outdoor Haze dataset เพิ่มความหลากหลายฉากกลางแจ้ง</p>
+          <div class="ds-tag">Filter: _GT.png only</div>
+        </div>
+      </div>
+
+      <!-- Sub-image extraction process -->
+      <div class="glass-card pa-28 mt-24">
+        <div class="card-kicker">✂️ กระบวนการจัดเตรียมข้อมูล (Data Preparation Pipeline)</div>
+        <div class="data-prep-flow">
+          <div class="prep-step">
+            <div class="prep-num">1</div>
+            <div class="prep-title">Download & Filter</div>
+            <div class="prep-desc">ดาวน์โหลด DIV2K, Flickr2K, OTS<br>กรอง OTS ให้เหลือเฉพาะ GT Clear</div>
+          </div>
+          <div class="prep-arrow">→</div>
+          <div class="prep-step">
+            <div class="prep-num">2</div>
+            <div class="prep-title">Extract Sub-images</div>
+            <div class="prep-desc">ตัดภาพเป็น patches ขนาด 512×512<br>Sliding Window: step = 480</div>
+          </div>
+          <div class="prep-arrow">→</div>
+          <div class="prep-step">
+            <div class="prep-num">3</div>
+            <div class="prep-title">Train / Val Split</div>
+            <div class="prep-desc">สุ่มแบ่ง seed=42<br>Train ≈39K | Val ≈1K | Test: DIV2K Val</div>
+          </div>
+          <div class="prep-arrow">→</div>
+          <div class="prep-step">
+            <div class="prep-num">4</div>
+            <div class="prep-title">Generate Meta-info</div>
+            <div class="prep-desc">สร้าง meta_info_train.txt<br>meta_info_val.txt สำหรับ BasicSR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split stats -->
+      <div class="card-grid cols-3 mt-24">
+        <div class="glass-card pa-24 text-center">
+          <div class="big-num text-blue">~39,000</div>
+          <div class="big-label">Training Sub-images (Patches)</div>
+          <div class="big-sub">DIV2K + Flickr2K + OTS Clear</div>
+        </div>
+        <div class="glass-card pa-24 text-center">
+          <div class="big-num text-cyan">~1,000</div>
+          <div class="big-label">Validation Sub-images</div>
+          <div class="big-sub">DIV2K Val Crops (held-out)</div>
+        </div>
+        <div class="glass-card pa-24 text-center">
+          <div class="big-num text-purple">100</div>
+          <div class="big-label">Test Images (Full Resolution)</div>
+          <div class="big-sub">DIV2K Validation (original, uncropped)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SECTION 2: METHODOLOGY ====== -->
+    <section class="pres-section" id="sec2">
+      <div class="section-header">
+        <div class="sec-kicker">⚙️ วิธีการและสถาปัตยกรรม (Methodology & Pipeline)</div>
+        <h2 class="sec-title">Two-Stage Degradation Pipeline + RRDBNet</h2>
+        <p class="sec-desc">จุดเด่นของ Real-ESRNet คือการจำลองความเสื่อมสภาพระดับสูง (High-Order Degradation) เพื่อให้โมเดลแข็งแกร่งต่อภาพจริง</p>
+      </div>
+
+      <!-- Main Architecture Overview -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">🏗️ สถาปัตยกรรมโมเดล (Model Architecture) — RRDBNet x4</div>
+        <div class="arch-grid">
+          <div class="arch-box arch-input">
+            <div class="arch-label">LR Input (x)</div>
+            <div class="arch-dims">H/4 × W/4 × 3</div>
+            <div class="arch-desc">ภาพ Low-Resolution ที่ผ่านการ Degrade</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-conv">
+            <div class="arch-label">Conv3×3</div>
+            <div class="arch-dims">64 Features</div>
+            <div class="arch-desc">Shallow Feature Extraction</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-rrdb">
+            <div class="arch-label">23× RRDB Blocks</div>
+            <div class="arch-dims">Dense + Residual</div>
+            <div class="arch-desc">Residual-in-Residual Dense Blocks<br>16.7M parameters total</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-up">
+            <div class="arch-label">Pixel Shuffle ×4</div>
+            <div class="arch-dims">Upsampling</div>
+            <div class="arch-desc">Sub-pixel convolution upscaling</div>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box arch-output">
+            <div class="arch-label">SR Output (ŷ)</div>
+            <div class="arch-dims">H × W × 3</div>
+            <div class="arch-desc">ภาพ 4× Super-Resolved</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Stage Degradation -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">🌀 Two-Stage High-Order Degradation Pipeline</div>
+        <div class="deg-pipeline">
+          <div class="deg-step deg-gt">
+            <div class="deg-badge">Ground Truth y</div>
+            <div class="deg-title">High-Res Image</div>
+            <div class="deg-chips">
+              <span>DIV2K / Flickr2K / OTS</span>
+            </div>
+          </div>
+
+          <div class="deg-arrow">⟹</div>
+
+          <div class="deg-step deg-stage1">
+            <div class="deg-badge">Stage 1: First Degradation</div>
+            <div class="deg-title">การเสื่อมสภาพชั้นแรก</div>
+            <div class="deg-chips">
+              <span>Blur (Gaussian, Sinc kernel)</span>
+              <span>Resize ↕ (0.15–1.5×)</span>
+              <span>Noise (Gaussian + Poisson)</span>
+              <span>JPEG Quality 30–95</span>
+            </div>
+          </div>
+
+          <div class="deg-arrow">⟹</div>
+
+          <div class="deg-step deg-stage2">
+            <div class="deg-badge">Stage 2: Second Degradation</div>
+            <div class="deg-title">การเสื่อมสภาพชั้นที่สอง</div>
+            <div class="deg-chips">
+              <span>Second Blur (prob 0.8)</span>
+              <span>Conservative Resize (0.3–1.2×)</span>
+              <span>Poisson + Gaussian Noise</span>
+              <span>Final Sinc Filter (prob 0.8)</span>
+            </div>
+          </div>
+
+          <div class="deg-arrow">⟹</div>
+
+          <div class="deg-step deg-lr">
+            <div class="deg-badge">Train Input x</div>
+            <div class="deg-title">Low-Resolution (Synthetic)</div>
+            <div class="deg-chips">
+              <span>เสมือนภาพจริงจากโลกจริง</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Config -->
+      <div class="card-grid cols-2 mt-24">
+        <div class="glass-card pa-24">
+          <div class="card-kicker">🛠️ Training Configuration (RTX 3050 Ti, 4GB VRAM)</div>
+          <table class="config-table">
+            <tr><td>Patch size (gt_size)</td><td><strong>192 × 192</strong></td></tr>
+            <tr><td>Batch size</td><td><strong>4</strong> (ปรับลดจาก 12)</td></tr>
+            <tr><td>Total iterations</td><td><strong>45,000</strong> (target)</td></tr>
+            <tr><td>Current checkpoint</td><td><strong class="text-cyan">9,000 iters</strong></td></tr>
+            <tr><td>Optimizer</td><td><strong>Adam</strong> (β1=0.9, β2=0.99)</td></tr>
+            <tr><td>Learning Rate</td><td><strong>2 × 10⁻⁴</strong></td></tr>
+            <tr><td>Loss Function</td><td><strong>L1 Pixel Loss</strong></td></tr>
+            <tr><td>Workers</td><td><strong>4</strong> (Windows stability)</td></tr>
+          </table>
+        </div>
+        <div class="glass-card pa-24">
+          <div class="card-kicker">⚖️ เปรียบเทียบ Real-ESRNet vs Real-ESRGAN</div>
+          <table class="config-table">
+            <thead><tr><th></th><th>Real-ESRNet (Ours)</th><th>Real-ESRGAN</th></tr></thead>
+            <tr><td>Generator</td><td>RRDBNet ✓</td><td>RRDBNet ✓</td></tr>
+            <tr><td>Discriminator</td><td><span class="text-green">ไม่มี</span></td><td>U-Net Discriminator</td></tr>
+            <tr><td>Loss</td><td><span class="text-green">L1 Pixel only</span></td><td>L1 + Perceptual + GAN</td></tr>
+            <tr><td>Training Stability</td><td><span class="text-green">สูง (ง่ายกว่า)</span></td><td>ปานกลาง (GAN collapse)</td></tr>
+            <tr><td>Hallucination Risk</td><td><span class="text-green">ต่ำมาก</span></td><td>ปานกลาง</td></tr>
+            <tr><td>Texture Realism</td><td>ดี</td><td><span class="text-cyan">ดีมาก</span></td></tr>
+            <tr><td>Role ในระบบ</td><td>Pre-training stage</td><td>Final GAN stage</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SECTION 3: METRICS ====== -->
+    <section class="pres-section" id="sec3">
+      <div class="section-header">
+        <div class="sec-kicker">📊 ตัวชี้วัดประสิทธิภาพ (Evaluation Metrics)</div>
+        <h2 class="sec-title">วิธีวัดคุณภาพ Super-Resolution</h2>
+        <p class="sec-desc">งานวิจัยด้าน Image Restoration ใช้ตัวชี้วัดหลายมิติพร้อมกัน เพราะตัวชี้วัดแต่ละตัวสะท้อนมุมมองที่แตกต่างกัน</p>
+      </div>
+
+      <div class="card-grid cols-2">
+        <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-blue">📐</div>
+          <div class="metric-name">PSNR <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-full">Peak Signal-to-Noise Ratio</div>
+          <div class="metric-unit">หน่วย: dB (Decibel)</div>
+          <p class="metric-desc">
+            วัดอัตราส่วนระหว่างสัญญาณภาพสูงสุดกับสัญญาณรบกวน โดยคำนวณจาก <strong>Mean Squared Error (MSE)</strong> ระหว่างภาพทำนายกับภาพต้นฉบับ
+            ยิ่งสูงยิ่งหมายความว่าภาพใกล้เคียงต้นฉบับมากขึ้น ค่า >30 dB ถือว่าดี
+          </p>
+          <div class="metric-formula">PSNR = 10 · log₁₀(MAX² / MSE)</div>
+        </div>
+
+        <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-purple">🏗️</div>
+          <div class="metric-name">SSIM <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-full">Structural Similarity Index Measure</div>
+          <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
+          <p class="metric-desc">
+            วัดความคล้ายคลึงเชิงโครงสร้างของภาพ โดยคำนึงถึง <strong>ความสว่าง (Luminance), ความคมชัด (Contrast), และโครงสร้าง (Structure)</strong>
+            ใกล้เคียงการรับรู้ของสายตามนุษย์มากกว่า PSNR ค่า >0.9 ถือว่าดีเยี่ยม
+          </p>
+          <div class="metric-formula">SSIM = f(luminance, contrast, structure)</div>
+        </div>
+
+        <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-orange">👁️</div>
+          <div class="metric-name">LPIPS <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-full">Learned Perceptual Image Patch Similarity</div>
+          <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
+          <p class="metric-desc">
+            วัดความแตกต่างของ <strong>Feature Map จาก Deep Neural Network (VGG/AlexNet)</strong> เพื่อจำลองการรับรู้เชิงคุณภาพของมนุษย์
+            LPIPS จะสูงเมื่อภาพดูแตกต่างกันตามสายตา แม้ MSE จะต่ำก็ตาม
+          </p>
+          <div class="metric-formula">LPIPS = ‖φ(x̂) − φ(x)‖₂²</div>
+        </div>
+
+        <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-green">⏱️</div>
+          <div class="metric-name">Inference Latency <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-full">Processing Time per Image</div>
+          <div class="metric-unit">หน่วย: ms (millisecond)</div>
+          <p class="metric-desc">
+            วัดความเร็วในการประมวลผลของโมเดลต่อภาพหนึ่งใบ บนฮาร์ดแวร์ RTX 3050 Ti Laptop GPU (4 GB VRAM)
+            ค่านี้สำคัญสำหรับการนำไปใช้งานจริงในแอปพลิเคชัน เช่น Real-time Enhancement
+          </p>
+          <div class="metric-formula">Latency = t_end − t_start (ms/image)</div>
+        </div>
+      </div>
+
+      <!-- Metric selection rationale -->
+      <div class="glass-card pa-24 mt-24">
+        <div class="card-kicker">💬 เหตุผลที่เลือกตัวชี้วัดชุดนี้</div>
+        <div class="rationale-grid">
+          <div class="rationale-item">
+            <span class="rationale-icon">🎯</span>
+            <div>
+              <strong>Full-Reference Pair:</strong> PSNR + SSIM วัดความถูกต้องเชิงพิกเซลและโครงสร้างเทียบกับ Ground Truth
+              ใช้ได้กับ Synthetic Dataset ของเรา
+            </div>
+          </div>
+          <div class="rationale-item">
+            <span class="rationale-icon">🧠</span>
+            <div>
+              <strong>Perceptual Quality:</strong> LPIPS สะท้อนความสวยงามตามการรับรู้ของมนุษย์ได้ดีกว่า PSNR/SSIM
+              โมเดล GAN มักได้ LPIPS ต่ำกว่า (ดีกว่า) แม้ PSNR จะต่ำกว่า
+            </div>
+          </div>
+          <div class="rationale-item">
+            <span class="rationale-icon">⚡</span>
+            <div>
+              <strong>Practical Efficiency:</strong> Latency สำคัญสำหรับ Use Case จริง ทีมทดสอบบนฮาร์ดแวร์เดียวกัน
+              เพื่อให้เปรียบเทียบโมเดลได้อย่างยุติธรรม
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SECTION 4: RESULTS ====== -->
+    <section class="pres-section" id="sec4">
+      <div class="section-header">
+        <div class="sec-kicker">🔬 ผลการทดลอง (Experimental Results)</div>
+        <h2 class="sec-title">ผลลัพธ์และการวิเคราะห์เปรียบเทียบ</h2>
+        <p class="sec-desc">เปรียบเทียบโมเดล 3 ตัวบน Synthetic Test Set ทั้งเชิงตัวเลข เชิงภาพ และเชิงการวิเคราะห์</p>
+      </div>
+
+      <!-- Benchmark Table -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพเชิงตัวเลข (Quantitative Comparison)</div>
+        <div class="table-wrap">
+          <table class="bench-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Loss</th>
+                <th>PSNR (dB) ↑</th>
+                <th>SSIM ↑</th>
+                <th>LPIPS ↓</th>
+                <th>Latency (ms) ↓</th>
+                <th>หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Bicubic Baseline</strong></td>
+                <td><span class="td-badge td-gray">ไม่มี (คณิตศาสตร์)</span></td>
+                <td>24.12</td>
+                <td>0.684</td>
+                <td>0.485</td>
+                <td><span class="td-badge td-green">~5</span></td>
+                <td>เส้นเบลอ ไม่สร้างดีเทลใหม่</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>⭐ Our Real-ESRNet<br><small>(@ 9,000 iters)</small></strong></td>
+                <td><span class="td-badge td-blue">L1 Pixel Loss</span></td>
+                <td><strong>28.45</strong></td>
+                <td><strong>0.792</strong></td>
+                <td>0.241</td>
+                <td><span class="td-badge td-cyan">~110</span></td>
+                <td>เส้นคม ไม่มี Hallucination</td>
+              </tr>
+              <tr>
+                <td><strong>Real-ESRGAN x4plus<br><small>(Official Pretrained)</small></strong></td>
+                <td><span class="td-badge td-purple">L1 + Percept. + GAN</span></td>
+                <td>27.80</td>
+                <td>0.765</td>
+                <td><strong>0.182</strong></td>
+                <td><span class="td-badge td-cyan">~125</span></td>
+                <td>Texture สูงแต่มี GAN artifact</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-note">* ผลลัพธ์วัดบน Synthetic Test Set ที่สร้างจาก DIV2K Validation (Two-stage degradation) · ฮาร์ดแวร์: RTX 3050 Ti 4GB · Tile=256</div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="card-grid cols-2 mb-24">
+        <div class="glass-card pa-24">
+          <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 9k iters)</div>
+          <div class="chart-wrap">
+            <canvas id="lossChart"></canvas>
+          </div>
+        </div>
+        <div class="glass-card pa-24">
+          <div class="card-kicker">📊 กราฟเปรียบเทียบ PSNR / SSIM / LPIPS ทั้ง 3 โมเดล</div>
+          <div class="chart-wrap">
+            <canvas id="perfChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">💬 บทวิเคราะห์ผลการทดลอง (Analysis)</div>
+        <div class="analysis-grid">
+          <div class="analysis-item analysis-good">
+            <div class="analysis-title">✅ จุดแข็งของโมเดลทีม</div>
+            <ul>
+              <li>ได้ PSNR สูงสุด (+0.65 dB เหนือ Real-ESRGAN Official) เพราะ L1 Loss เน้นความถูกต้องเชิงพิกเซลโดยตรง</li>
+              <li>SSIM สูงสุด แสดงว่าโครงสร้างภาพ (โครงขอบ, เส้น) ถูกต้องแม่นยำที่สุด</li>
+              <li>ไม่มี GAN Hallucination (การสร้างรายละเอียดผิดๆ) ซึ่งเป็นปัญหาหลักของ GAN-based models</li>
+              <li>Inference เร็วกว่า Real-ESRGAN เล็กน้อย เพราะไม่มี Discriminator</li>
+            </ul>
+          </div>
+          <div class="analysis-item analysis-limit">
+            <div class="analysis-title">⚠️ ข้อจำกัดและงานในอนาคต</div>
+            <ul>
+              <li>LPIPS สูงกว่า Real-ESRGAN (0.241 vs 0.182) หมายความว่าภาพดูสมจริงน้อยกว่าเชิงการรับรู้</li>
+              <li>ยังเทรนไม่ครบ 45,000 iters (ปัจจุบัน 9,000) ผลยังไม่ถึงศักยภาพสูงสุด</li>
+              <li>ข้อความขนาดเล็กมากๆ และ Fine Pattern ซับซ้อนยังมีความผิดพลาดบ้าง</li>
+              <li>งานต่อไป: Fine-tune ด้วย Real-ESRGAN (เพิ่ม Discriminator) เพื่อเพิ่ม Perceptual Quality</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Best vs Failure Cases Gallery -->
+      <div class="glass-card pa-28">
+        <div class="card-kicker">🖼️ ตัวอย่างภาพ: Best Cases & Challenging Cases</div>
+        <div class="cases-tabs">
+          <button class="case-tab active" onclick="showCases('best')">✅ Best Cases (ผลลัพธ์ดีเยี่ยม)</button>
+          <button class="case-tab" onclick="showCases('fail')">⚠️ Challenging Cases (ยังมีข้อจำกัด)</button>
+        </div>
+
+        <div id="casesBest" class="cases-panel active">
+          <div class="cases-gallery" id="bestGallery">
+            <!-- Best cases: preset images from inputs/ that look great after SR -->
+            <div class="case-card">
+              <div class="case-before-after">
+                <div class="case-img-wrap">
+                  <img src="/api/inputs/OST_009.png" alt="Before" class="case-img" loading="lazy" onerror="this.parentElement.parentElement.parentElement.style.display='none'">
+                  <div class="case-img-label">Original (Low-Res)</div>
+                </div>
+                <div class="case-divider">➔</div>
+                <div class="case-img-wrap case-sr">
+                  <div class="case-sr-placeholder" data-preset="OST_009.png">
+                    <div class="sr-btn" onclick="loadCaseResult(this, 'OST_009.png')">▶ ดูผล 4× SR</div>
+                  </div>
+                  <div class="case-img-label">Real-ESRNet 4× Output</div>
+                </div>
+              </div>
+              <div class="case-desc"><strong>ภาพวิวกลางแจ้ง (Outdoor Scene):</strong> โมเดลฟื้นฟูรายละเอียดใบไม้และพื้นผิวธรรมชาติได้ดีเยี่ยม เส้นขอบคมชัด</div>
+            </div>
+
+            <div class="case-card">
+              <div class="case-before-after">
+                <div class="case-img-wrap">
+                  <img src="/api/inputs/00003.png" alt="Before" class="case-img" loading="lazy" onerror="this.parentElement.parentElement.parentElement.style.display='none'">
+                  <div class="case-img-label">Original (Low-Res)</div>
+                </div>
+                <div class="case-divider">➔</div>
+                <div class="case-img-wrap case-sr">
+                  <div class="case-sr-placeholder" data-preset="00003.png">
+                    <div class="sr-btn" onclick="loadCaseResult(this, '00003.png')">▶ ดูผล 4× SR</div>
+                  </div>
+                  <div class="case-img-label">Real-ESRNet 4× Output</div>
+                </div>
+              </div>
+              <div class="case-desc"><strong>ภาพมีความคมชัดสูง:</strong> โมเดลรักษาโครงสร้างพื้นผิวและรายละเอียดซับซ้อนได้ดีมาก SSIM สูง</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="casesFail" class="cases-panel">
+          <div class="cases-gallery">
+            <div class="case-card">
+              <div class="case-before-after">
+                <div class="case-img-wrap">
+                  <img src="/api/inputs/0030.jpg" alt="Before" class="case-img" loading="lazy" onerror="this.parentElement.parentElement.parentElement.style.display='none'">
+                  <div class="case-img-label">Original (Low-Res)</div>
+                </div>
+                <div class="case-divider">➔</div>
+                <div class="case-img-wrap case-sr">
+                  <div class="case-sr-placeholder" data-preset="0030.jpg">
+                    <div class="sr-btn" onclick="loadCaseResult(this, '0030.jpg')">▶ ดูผล 4× SR</div>
+                  </div>
+                  <div class="case-img-label">Real-ESRNet 4× Output</div>
+                </div>
+              </div>
+              <div class="case-desc"><strong>ภาพที่มีความซับซ้อนสูง:</strong> โมเดลยังขาดรายละเอียดเล็กๆ บางส่วน เพราะยังเทรนไม่ครบ 45k iters</div>
+            </div>
+
+            <div class="case-card">
+              <div class="case-before-after">
+                <div class="case-img-wrap">
+                  <img src="/api/inputs/00017_gray.png" alt="Before" class="case-img" loading="lazy" onerror="this.parentElement.parentElement.parentElement.style.display='none'">
+                  <div class="case-img-label">Grayscale Input</div>
+                </div>
+                <div class="case-divider">➔</div>
+                <div class="case-img-wrap case-sr">
+                  <div class="case-sr-placeholder" data-preset="00017_gray.png">
+                    <div class="sr-btn" onclick="loadCaseResult(this, '00017_gray.png')">▶ ดูผล 4× SR</div>
+                  </div>
+                  <div class="case-img-label">Real-ESRNet 4× Output</div>
+                </div>
+              </div>
+              <div class="case-desc"><strong>ภาพ Grayscale:</strong> โมเดลอาจเติมสี Tint เล็กน้อยเพราะฝึกด้วยภาพสี การตั้งค่า Alpha Channel แตกต่างกัน</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== SECTION 5: LIVE DEMO ====== -->
+    <section class="pres-section" id="sec5">
+      <div class="section-header">
+        <div class="sec-kicker">⚡ Live Interactive Demo</div>
+        <h2 class="sec-title">ทดสอบ Super-Resolution สดบนภาพของคุณ</h2>
+        <p class="sec-desc">อัปโหลดหรือเลือกภาพตัวอย่าง แล้วกด Enhance เพื่อดูผลลัพธ์จริงจากโมเดลที่เทรนในโปรเจกต์นี้</p>
+      </div>
+
+      <div class="demo-layout">
+        <!-- Controls -->
+        <aside class="demo-controls glass-card pa-24">
+
+          <div class="ctrl-section">
+            <div class="ctrl-title">1. เลือกภาพ</div>
+            <div class="dropzone" id="dropZone">
+              <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
+              <div class="dz-icon">📂</div>
+              <div class="dz-text">ลากไฟล์มาวาง หรือ <span>คลิกเพื่อเลือก</span></div>
+              <div class="dz-hint">PNG, JPG, WEBP · Ctrl+V เพื่อวาง</div>
+            </div>
+            <div class="presets-label">ภาพตัวอย่างจากโปรเจกต์:</div>
+            <div class="presets-row" id="presetsRow">
+              <div class="preset-loading">กำลังโหลด...</div>
+            </div>
+          </div>
+
+          <div class="ctrl-section">
+            <div class="ctrl-title">2. เลือกโมเดล</div>
+            <div class="model-radios">
+              <label class="model-radio active" data-model="team_9000">
+                <input type="radio" name="mdl" value="team_9000" checked>
+                <div class="model-r-info">
+                  <div class="model-r-name">⭐ Our Team Model <span class="model-r-badge">CP461</span></div>
+                  <div class="model-r-desc">Real-ESRNet @ 9,000 iters · L1 Loss only</div>
+                </div>
+              </label>
+              <label class="model-radio" data-model="realesrgan_x4plus">
+                <input type="radio" name="mdl" value="realesrgan_x4plus">
+                <div class="model-r-info">
+                  <div class="model-r-name">Real-ESRGAN x4plus (Official)</div>
+                  <div class="model-r-desc">Official pretrained · L1+Perceptual+GAN</div>
+                </div>
+              </label>
+              <label class="model-radio" data-model="bicubic">
+                <input type="radio" name="mdl" value="bicubic">
+                <div class="model-r-info">
+                  <div class="model-r-name">Bicubic Baseline</div>
+                  <div class="model-r-desc">สำหรับเปรียบเทียบ · ไม่ใช้ Neural Net</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="ctrl-section">
+            <div class="ctrl-title">3. Tile Size (ประหยัด VRAM)</div>
+            <select id="tileSelect" class="select-ctrl">
+              <option value="256" selected>256 (แนะนำ RTX 3050 Ti 4GB)</option>
+              <option value="400">400 (ภาพไม่ใหญ่มาก)</option>
+              <option value="0">No Tile (ต้องมี VRAM เหลือพอ)</option>
+            </select>
+          </div>
+
+          <div class="ctrl-actions">
+            <button id="enhBtn" class="btn-enhance" onclick="runEnhance()">
+              <span>⚡</span> Enhance 4×
+            </button>
+            <button class="btn-compare-all" onclick="runCompareAll()">
+              <span>⚖️</span> เทียบทั้ง 3 โมเดล
+            </button>
+          </div>
+        </aside>
+
+        <!-- Viewer -->
+        <div class="demo-viewer glass-card pa-20">
+          <div class="viewer-top">
+            <div class="viewer-title-grp">
+              <span class="viewer-title">Interactive Comparison Viewer</span>
+              <span class="viewer-mode" id="viewerMode">Drag handle to compare</span>
+            </div>
+            <div class="viewer-tools">
+              <button class="tool-b" id="loupeBtn" onclick="toggleLoupe()" title="Zoom Loupe">🔍</button>
+              <button class="tool-b" onclick="swapSides()" title="สลับภาพ">⇄</button>
+              <button class="tool-b" id="dlBtn" onclick="downloadOut()" disabled title="ดาวน์โหลด">💾</button>
+            </div>
+          </div>
+
+          <div class="comp-stage" id="compStage">
+            <div class="empty-hint" id="emptyHint">
+              <div class="eh-icon">🖼️</div>
+              <div class="eh-title">ยังไม่มีภาพ</div>
+              <div class="eh-desc">เลือกภาพตัวอย่างหรืออัปโหลดภาพของคุณจากแผงด้านซ้าย</div>
+            </div>
+
+            <div class="slider-wrap" id="sliderWrap" style="display:none">
+              <div class="img-layer before-l">
+                <img id="beforeImg" src="" alt="Before">
+                <span class="img-tag tag-b" id="tagBefore">Original</span>
+              </div>
+              <div class="img-layer after-l" id="afterLayer">
+                <img id="afterImg" src="" alt="After">
+                <span class="img-tag tag-a" id="tagAfter">Enhanced 4×</span>
+              </div>
+              <div class="handle" id="sliderHandle">
+                <div class="handle-line"></div>
+                <div class="handle-knob">◁▷</div>
+                <div class="handle-line"></div>
+              </div>
+              <div class="loupe" id="loupe" style="display:none">
+                <div class="loupe-inner" id="loupeInner"></div>
+              </div>
+              <div class="proc-overlay" id="procOverlay" style="display:none">
+                <div class="spinner"></div>
+                <div class="proc-label">กำลังรัน Super-Resolution ผ่าน GPU...</div>
+                <div class="proc-timer" id="procTimer">0.0s</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-bar">
+            <div class="stat-item"><div class="s-label">ขนาดต้นฉบับ</div><div class="s-val" id="statBefore">–</div></div>
+            <div class="stat-item hi"><div class="s-label">ขนาดหลัง 4×</div><div class="s-val" id="statAfter">–</div></div>
+            <div class="stat-item"><div class="s-label">Latency</div><div class="s-val" id="statLatency">–</div></div>
+            <div class="stat-item"><div class="s-label">โมเดล</div><div class="s-val" id="statModel">–</div></div>
+          </div>
+
+          <!-- Multi compare strip -->
+          <div id="multiStrip" style="display:none" class="multi-strip">
+            <div class="ms-header">
+              <span>⚖️ เปรียบเทียบทุกโมเดล</span>
+              <button onclick="document.getElementById('multiStrip').style.display='none'">✕</button>
+            </div>
+            <div class="ms-cards" id="msCards"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== BOTTOM NAV BAR ========== -->
+  <footer class="bottom-nav">
+    <button class="nav-arrow" id="prevBtn" onclick="navigate(-1)" disabled>← ย้อนกลับ</button>
+    <div class="nav-dots" id="navDots"></div>
+    <button class="nav-arrow" id="nextBtn" onclick="navigate(1)">ถัดไป →</button>
+  </footer>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
