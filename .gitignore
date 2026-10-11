@@ -55,6 +55,7 @@ MANIFEST
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+pip_torch_install.err
 
 # Unit test / coverage reports
 htmlcov/
