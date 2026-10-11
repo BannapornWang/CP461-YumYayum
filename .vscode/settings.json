@@ -16,4 +16,7 @@
     "python.linting.flake8Args": [
         "max-line-length=120"
     ],
+    "files.watcherExclude": {
+        "**/target/**": true
+    },
 }

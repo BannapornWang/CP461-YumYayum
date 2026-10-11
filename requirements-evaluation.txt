@@ -1,0 +1,3 @@
+# Optional packages for project/evaluate.py and project/report_figures.py
+pyiqa
+matplotlib

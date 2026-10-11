@@ -53,7 +53,7 @@ def extract_subimages_for_dataset(
 ) -> Tuple[bool, dict]:
     """
     Call scripts/extract_subimages.py for a dataset.
-    
+
     Args:
         dataset_name: Name of dataset (e.g., 'DIV2K_train')
         input_dir: Input image directory
@@ -61,7 +61,7 @@ def extract_subimages_for_dataset(
         crop_size: Crop size in pixels
         step: Step size between crops
         num_thread: Number of threads
-        
+
     Returns:
         (success, stats) tuple
     """
@@ -70,28 +70,28 @@ def extract_subimages_for_dataset(
     logger.info(f"{'='*60}")
     logger.info(f"Input:  {input_dir}")
     logger.info(f"Output: {output_dir}")
-    logger.info(f"Crop size: {crop_size}×{crop_size}, Step: {step}")
-    
+    logger.info(f"Crop size: {crop_size}x{crop_size}, Step: {step}")
+
     # Verify input
     if not input_dir.exists():
         logger.error(f"Input directory not found: {input_dir}")
         return False, {}
-    
+
     input_images = list(input_dir.glob('*.png')) + list(input_dir.glob('*.jpg'))
     if not input_images:
         logger.error(f"No images found in {input_dir}")
         return False, {}
-    
+
     logger.info(f"Found {len(input_images)} input images")
-    
+
     # Create output directory
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Call scripts/extract_subimages.py
+
+    # Call scripts/extract_subimages_standalone.py (no basicsr dependency)
     try:
         cmd = [
             'python',
-            'scripts/extract_subimages.py',
+            'scripts/extract_subimages_standalone.py',
             '--input',
             str(input_dir),
             '--output',
@@ -103,7 +103,7 @@ def extract_subimages_for_dataset(
             '--thread_num',
             str(num_thread),
         ]
-        
+
         logger.info(f"Running: {' '.join(cmd)}")
         result = subprocess.run(
             cmd,
@@ -112,19 +112,19 @@ def extract_subimages_for_dataset(
             text=True,
             timeout=3600  # 1 hour timeout
         )
-        
+
         if result.returncode != 0:
             logger.error(f"Script failed with return code {result.returncode}")
             logger.error(f"STDOUT:\n{result.stdout}")
             logger.error(f"STDERR:\n{result.stderr}")
             return False, {}
-        
+
         logger.info(result.stdout)
-        
+
         # Count output subimages
         output_images = list(output_dir.glob('*.png'))
-        logger.info(f"✓ Extraction complete: {len(output_images)} subimages")
-        
+        logger.info(f"[OK] Extraction complete: {len(output_images)} subimages")
+
         stats = {
             'dataset': dataset_name,
             'input_count': len(input_images),
@@ -133,9 +133,9 @@ def extract_subimages_for_dataset(
             'step': step,
             'success': True,
         }
-        
+
         return True, stats
-        
+
     except subprocess.TimeoutExpired:
         logger.error(f"Script timeout after 1 hour")
         return False, {}
@@ -153,14 +153,14 @@ def extract_all_datasets(
 ) -> Tuple[bool, List[dict]]:
     """
     Extract subimages for all specified datasets.
-    
+
     Args:
         base_dir: Base datasets directory
         output_base_dir: Output base directory
         datasets_to_extract: List of dataset names
         crop_size: Crop size
         step: Step size
-        
+
     Returns:
         (all_success, stats_list) tuple
     """
@@ -182,15 +182,15 @@ def extract_all_datasets(
             'output': output_base_dir / 'OTS_clear_sub',
         },
     }
-    
+
     all_stats = []
     all_success = True
-    
+
     for dataset_name in datasets_to_extract:
         if dataset_name not in dataset_configs:
             logger.warning(f"Unknown dataset: {dataset_name}")
             continue
-        
+
         config = dataset_configs[dataset_name]
         success, stats = extract_subimages_for_dataset(
             dataset_name,
@@ -199,11 +199,11 @@ def extract_all_datasets(
             crop_size=crop_size,
             step=step,
         )
-        
+
         if stats:
             all_stats.append(stats)
         all_success = all_success and success
-    
+
     return all_success, all_stats
 
 
@@ -212,13 +212,13 @@ def save_extraction_log(output_dir: Path, log_data: dict) -> None:
     log_file = output_dir / '_extraction_log.json'
     with open(log_file, 'w') as f:
         json.dump(log_data, f, indent=2, default=str)
-    logger.info(f"✓ Extraction log saved: {log_file}")
+    logger.info(f"[OK] Extraction log saved: {log_file}")
 
 
 def main() -> int:
     """
     Main entry point.
-    
+
     Returns:
         0 if all successful, 1 otherwise
     """
@@ -255,24 +255,24 @@ def main() -> int:
         default=480,
         help='Step size between crops (default: 480)'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup
     base_dir = Path(args.base_dir).resolve()
     output_dir = Path(args.output_dir).resolve()
-    
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     log_file = output_dir / '_prepare_subimages.txt'
     create_logger_file(log_file)
-    
+
     logger.info("="*60)
     logger.info("Subimage Extraction Pipeline")
     logger.info("="*60)
     logger.info(f"Base directory: {base_dir}")
     logger.info(f"Output directory: {output_dir}")
-    
+
     # Determine datasets to extract
     if args.datasets == 'all':
         datasets_to_extract = ['div2k_train', 'div2k_val', 'flickr2k', 'ots']
@@ -282,9 +282,9 @@ def main() -> int:
         # User can specify via additional arguments if needed
     else:
         datasets_to_extract = [args.datasets]
-    
+
     logger.info(f"Datasets to extract: {datasets_to_extract}")
-    
+
     # Extract subimages
     all_success, all_stats = extract_all_datasets(
         base_dir,
@@ -293,7 +293,7 @@ def main() -> int:
         crop_size=args.crop_size,
         step=args.step,
     )
-    
+
     # Save log
     extraction_log = {
         'base_dir': str(base_dir),
@@ -304,9 +304,9 @@ def main() -> int:
         'total_datasets': len(all_stats),
         'all_success': all_success,
     }
-    
+
     save_extraction_log(output_dir, extraction_log)
-    
+
     # Summary
     logger.info("\n" + "="*60)
     logger.info("Extraction Summary")
@@ -314,14 +314,14 @@ def main() -> int:
     for stat in all_stats:
         logger.info(
             f"{stat['dataset']}: "
-            f"{stat['input_count']} input → {stat['output_count']} subimages"
+            f"{stat['input_count']} input -> {stat['output_count']} subimages"
         )
-    
+
     if all_success:
-        logger.info("\n✓ All extractions completed successfully")
+        logger.info("\n[OK] All extractions completed successfully")
         return 0
     else:
-        logger.error("\n✗ Some extractions failed")
+        logger.error("\n[ERROR] Some extractions failed")
         return 1
 
 

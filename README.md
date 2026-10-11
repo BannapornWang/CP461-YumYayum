@@ -340,3 +340,7 @@ python inference_realesrgan.py --model_name RealESRNet_x4plus --model_path exper
 ```
 
 The `--tile` option reduces GPU memory use. Change the checkpoint path to an earlier `net_g_<iteration>.pth` file to run inference before the final iteration.
+
+### Evaluation, ablations, and report figures
+
+See [`project/README_eval_ablation_report.md`](project/README_eval_ablation_report.md) for paired and real-world evaluation, ablation config generation, blind-study setup, and report figure commands. Experiment result values are intentionally omitted until measured artifacts are available.

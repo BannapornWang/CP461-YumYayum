@@ -46,30 +46,30 @@ def generate_metainfo_via_script(
 ) -> Tuple[bool, int]:
     """
     Call scripts/generate_meta_info.py for a dataset.
-    
+
     Args:
         input_folder: Input dataset folder
         output_file: Output meta_info .txt file
         dataset_name: Dataset name for logging
         check: Whether to validate image existence
-        
+
     Returns:
         (success, line_count) tuple
     """
     logger.info(f"\nGenerating meta_info for: {dataset_name}")
     logger.info(f"Input folder: {input_folder}")
     logger.info(f"Output file: {output_file}")
-    
+
     if not input_folder.exists():
         logger.error(f"Input folder not found: {input_folder}")
         return False, 0
-    
+
     # Count input images
     image_files = list(input_folder.glob('*.png'))
     if not image_files:
         logger.warning(f"No PNG images found in {input_folder}")
     logger.info(f"Found {len(image_files)} images")
-    
+
     try:
         cmd = [
             'python',
@@ -79,10 +79,10 @@ def generate_metainfo_via_script(
             '--output',
             str(output_file),
         ]
-        
+
         if check:
             cmd.append('--check')
-        
+
         logger.info(f"Running: {' '.join(cmd)}")
         result = subprocess.run(
             cmd,
@@ -91,25 +91,25 @@ def generate_metainfo_via_script(
             text=True,
             timeout=600  # 10 minute timeout
         )
-        
+
         if result.returncode != 0:
             logger.error(f"Script failed with return code {result.returncode}")
             logger.error(f"STDOUT:\n{result.stdout}")
             logger.error(f"STDERR:\n{result.stderr}")
             return False, 0
-        
+
         logger.info(result.stdout)
-        
+
         # Count output lines
         if output_file.exists():
             with open(output_file, 'r') as f:
                 line_count = sum(1 for _ in f)
-            logger.info(f"✓ Generated {line_count} entries in {output_file}")
+            logger.info(f"[OK] Generated {line_count} entries in {output_file}")
             return True, line_count
         else:
             logger.error(f"Output file not created: {output_file}")
             return False, 0
-        
+
     except subprocess.TimeoutExpired:
         logger.error("Script timeout after 10 minutes")
         return False, 0
@@ -121,20 +121,20 @@ def generate_metainfo_via_script(
 def validate_metainfo_file(meta_file: Path, base_dir: Path) -> Tuple[bool, dict]:
     """
     Validate metadata file by checking first and last entries.
-    
+
     Args:
         meta_file: Metadata .txt file
         base_dir: Base directory for relative path resolution
-        
+
     Returns:
         (valid, stats) tuple
     """
     logger.info(f"\nValidating: {meta_file}")
-    
+
     if not meta_file.exists():
         logger.error(f"Metadata file not found: {meta_file}")
         return False, {}
-    
+
     stats = {
         'file': str(meta_file),
         'total_lines': 0,
@@ -143,29 +143,29 @@ def validate_metainfo_file(meta_file: Path, base_dir: Path) -> Tuple[bool, dict]
         'first_entry': None,
         'last_entry': None,
     }
-    
+
     try:
         with open(meta_file, 'r') as f:
             lines = [line.strip() for line in f if line.strip()]
-        
+
         stats['total_lines'] = len(lines)
-        
+
         if len(lines) == 0:
             logger.error("Metadata file is empty")
             return False, stats
-        
+
         stats['first_entry'] = lines[0]
         stats['last_entry'] = lines[-1]
-        
+
         # Sample validation: check some entries
         sample_indices = [0, len(lines)//2, -1]  # First, middle, last
-        
+
         for idx in sample_indices:
             if 0 <= idx < len(lines):
                 entry = lines[idx]
                 # Entry can be single path or comma-separated GT,LQ
                 parts = [p.strip() for p in entry.split(',')]
-                
+
                 for part in parts:
                     full_path = base_dir / part
                     if full_path.exists():
@@ -173,14 +173,14 @@ def validate_metainfo_file(meta_file: Path, base_dir: Path) -> Tuple[bool, dict]
                     else:
                         logger.warning(f"Missing file: {part}")
                         stats['missing_files'] += 1
-        
+
         if stats['missing_files'] == 0:
-            logger.info(f"✓ Validation passed: all sampled entries verified")
+            logger.info(f"[OK] Validation passed: all sampled entries verified")
             return True, stats
         else:
-            logger.warning(f"⚠ Validation: {stats['missing_files']} missing files")
+            logger.warning(f"[WARN] Validation: {stats['missing_files']} missing files")
             return True, stats  # Still return True, just warn
-        
+
     except Exception as e:
         logger.error(f"Validation error: {e}")
         return False, stats
@@ -193,40 +193,40 @@ def generate_metainfo_from_txt_list(
 ) -> Tuple[bool, int]:
     """
     Generate metadata file from a .txt list file.
-    
+
     Used when subimages are not organized in a folder,
     but paths are already listed in a file.
-    
+
     Args:
         txt_list_file: Input .txt file with image paths
         output_file: Output metadata .txt file
         dataset_name: Dataset name
-        
+
     Returns:
         (success, line_count) tuple
     """
     logger.info(f"\nGenerating meta_info from .txt list: {dataset_name}")
     logger.info(f"Input: {txt_list_file}")
     logger.info(f"Output: {output_file}")
-    
+
     if not txt_list_file.exists():
         logger.error(f"Input .txt file not found: {txt_list_file}")
         return False, 0
-    
+
     try:
         # Simply copy/validate the .txt file
         with open(txt_list_file, 'r') as infile:
             lines = [line.strip() for line in infile if line.strip()]
-        
+
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_file, 'w') as outfile:
             for line in lines:
                 outfile.write(f"{line}\n")
-        
-        logger.info(f"✓ Created {len(lines)} entries in {output_file}")
+
+        logger.info(f"[OK] Created {len(lines)} entries in {output_file}")
         return True, len(lines)
-        
+
     except Exception as e:
         logger.error(f"Error: {e}")
         return False, 0
@@ -235,7 +235,7 @@ def generate_metainfo_from_txt_list(
 def main() -> int:
     """
     Main entry point.
-    
+
     Returns:
         0 if all successful, 1 otherwise
     """
@@ -259,28 +259,28 @@ def main() -> int:
         action='store_true',
         help='Validate image files during generation'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup
     base_dir = Path(args.base_dir).resolve()
     base_dir.mkdir(parents=True, exist_ok=True)
-    
+
     log_file = base_dir / '_generate_metainfo.txt'
     create_logger_file(log_file)
-    
+
     logger.info("="*60)
     logger.info("Metadata File Generation")
     logger.info("="*60)
     logger.info(f"Base directory: {base_dir}")
-    
+
     all_success = True
     all_stats = {}
-    
+
     # Generate train metadata
     if args.mode in ('train', 'all'):
         train_meta_file = base_dir / 'meta_info_train.txt'
-        
+
         # Reconstruct meta_info from split_dataset output
         if train_meta_file.exists():
             logger.info(f"Using existing train metadata: {train_meta_file}")
@@ -293,11 +293,11 @@ def main() -> int:
         else:
             logger.warning(f"Train metadata not found: {train_meta_file}")
             logger.info("Train metadata should be created by split_dataset.py")
-    
+
     # Generate val metadata
     if args.mode in ('val', 'all'):
         val_meta_file = base_dir / 'meta_info_val.txt'
-        
+
         if val_meta_file.exists():
             logger.info(f"Using existing val metadata: {val_meta_file}")
             with open(val_meta_file, 'r') as f:
@@ -309,36 +309,36 @@ def main() -> int:
         else:
             logger.warning(f"Val metadata not found: {val_meta_file}")
             logger.info("Val metadata should be created by split_dataset.py")
-    
+
     # Validate all metadata files
     logger.info("\n" + "="*60)
     logger.info("Validation")
     logger.info("="*60)
-    
+
     for meta_name in ['train', 'val']:
         meta_file = base_dir / f'meta_info_{meta_name}.txt'
         if meta_file.exists():
             valid, stats = validate_metainfo_file(meta_file, base_dir)
             all_stats[meta_name].update(stats)
             all_success = all_success and valid
-    
+
     # Save log
     logger.info("\n" + "="*60)
     logger.info("Summary")
     logger.info("="*60)
-    
+
     for meta_name, stats in all_stats.items():
         if 'total_lines' in stats:
             logger.info(
                 f"{meta_name}: {stats['total_lines']} entries "
                 f"({stats['missing_files']} missing)"
             )
-    
+
     log_file_path = base_dir / '_metainfo_log.json'
     with open(log_file_path, 'w') as f:
         json.dump(all_stats, f, indent=2, default=str)
     logger.info(f"✓ Log saved: {log_file_path}")
-    
+
     if all_success:
         logger.info("\n✓ Metadata generation completed successfully")
         return 0

@@ -42,10 +42,10 @@ def create_logger_file(log_path: Path) -> None:
 def verify_image_file(img_path: Path) -> bool:
     """
     Verify image file is valid (basic check).
-    
+
     Args:
         img_path: Path to image file
-        
+
     Returns:
         True if file exists and has expected extension
     """
@@ -59,31 +59,31 @@ def verify_image_file(img_path: Path) -> bool:
 def find_gt_images(ots_dir: Path) -> List[Tuple[Path, Path]]:
     """
     Find all GT (clear) images in OTS structure.
-    
+
     Args:
         ots_dir: Path to OTS/original/ directory
-        
+
     Returns:
         List of (gt_path, parent_folder) tuples
     """
     gt_images = []
-    
+
     if not ots_dir.exists():
         logger.error(f"OTS directory not found: {ots_dir}")
         return gt_images
-    
+
     # OTS structure: original/{0,1,...,N}/{name}_GT.png
     for subfolder in sorted(ots_dir.iterdir()):
         if not subfolder.is_dir():
             continue
-        
+
         # Find all *_GT.png files in this subfolder
         for img_file in subfolder.glob('*_GT.png'):
             if verify_image_file(img_file):
                 gt_images.append((img_file, subfolder.name))
             else:
                 logger.warning(f"Skipped invalid image: {img_file}")
-    
+
     return gt_images
 
 
@@ -94,45 +94,45 @@ def copy_gt_images(
 ) -> Tuple[int, int]:
     """
     Copy GT images to output directory.
-    
+
     Args:
         gt_images: List of (src_path, subfolder_name) tuples
         output_dir: Destination directory
         verify_dims: If True, validate image dimensions
-        
+
     Returns:
         (num_copied, num_failed) tuple
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     copied = 0
     failed = 0
-    
+
     for src_path, subfolder_name in gt_images:
         try:
             # Keep original filename with subfolder prefix
             dst_name = f"{subfolder_name}_{src_path.name}"
             dst_path = output_dir / dst_name
-            
+
             shutil.copy2(src_path, dst_path)
-            logger.info(f"✓ Copied: {src_path.name} → {dst_path}")
+            logger.info(f"[OK] Copied: {src_path.name} -> {dst_path}")
             copied += 1
-            
+
         except Exception as e:
-            logger.error(f"✗ Failed to copy {src_path}: {e}")
+            logger.error(f"[ERROR] Failed to copy {src_path}: {e}")
             failed += 1
-    
+
     return copied, failed
 
 
 def count_hazy_images(ots_dir: Path) -> int:
     """Count hazy images that will be discarded."""
     hazy_count = 0
-    
+
     for subfolder in ots_dir.iterdir():
         if subfolder.is_dir():
             hazy_count += len(list(subfolder.glob('*_hazy.png')))
-    
+
     return hazy_count
 
 
@@ -141,13 +141,13 @@ def save_filter_log(output_dir: Path, log_data: dict) -> None:
     log_file = output_dir.parent / '_filter_ots_log.json'
     with open(log_file, 'w') as f:
         json.dump(log_data, f, indent=2, default=str)
-    logger.info(f"✓ Filter log saved: {log_file}")
+    logger.info(f"[OK] Filter log saved: {log_file}")
 
 
 def main() -> int:
     """
     Main entry point.
-    
+
     Returns:
         0 if successful, 1 on error
     """
@@ -171,45 +171,45 @@ def main() -> int:
         action='store_true',
         help='Verify image dimensions during copy'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup
     input_dir = Path(args.input_dir).resolve()
     output_dir = Path(args.output_dir).resolve()
-    
+
     # Create log
     datasets_dir = output_dir.parent
     datasets_dir.mkdir(parents=True, exist_ok=True)
-    
+
     log_file = datasets_dir / '_filter_ots.txt'
     create_logger_file(log_file)
-    
+
     logger.info("="*60)
     logger.info("OTS Dataset Filtering (GT Extraction)")
     logger.info("="*60)
     logger.info(f"Input directory: {input_dir}")
     logger.info(f"Output directory: {output_dir}")
-    
+
     # Verify input
     if not input_dir.exists():
         logger.error(f"Input directory not found: {input_dir}")
         return 1
-    
+
     # Find GT images
     logger.info("\nScanning for GT images...")
     gt_images = find_gt_images(input_dir)
-    
+
     if not gt_images:
         logger.error("No GT images found in OTS structure")
         return 1
-    
+
     logger.info(f"Found {len(gt_images)} GT images")
-    
+
     # Count hazy images (will be discarded)
     hazy_count = count_hazy_images(input_dir)
     logger.info(f"Will discard {hazy_count} hazy images")
-    
+
     # Copy GT images
     logger.info("\nCopying GT images...")
     copied, failed = copy_gt_images(
@@ -217,11 +217,11 @@ def main() -> int:
         output_dir,
         verify_dims=args.verify_dims
     )
-    
+
     logger.info(f"\nCopied: {copied} images")
     if failed > 0:
         logger.warning(f"Failed: {failed} images")
-    
+
     # Save log
     filter_log = {
         'input_dir': str(input_dir),
@@ -231,14 +231,14 @@ def main() -> int:
         'hazy_images_discarded': hazy_count,
         'total_input_images': len(gt_images) + hazy_count,
     }
-    
+
     save_filter_log(output_dir, filter_log)
-    
+
     if failed == 0:
-        logger.info("\n✓ Filtering PASSED")
+        logger.info("\n[OK] Filtering PASSED")
         return 0
     else:
-        logger.warning(f"\n⚠ Filtering completed with {failed} failures")
+        logger.warning(f"\n[WARN] Filtering completed with {failed} failures")
         return 1
 
 
