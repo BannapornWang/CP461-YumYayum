@@ -2,6 +2,13 @@ import argparse
 import cv2
 import glob
 import os
+import sys
+
+from torchvision.transforms import functional as torchvision_functional
+
+# BasicSR 1.4.2 imports this module, removed in newer torchvision releases.
+sys.modules.setdefault('torchvision.transforms.functional_tensor', torchvision_functional)
+
 from basicsr.archs.rrdbnet_arch import RRDBNet
 from basicsr.utils.download_util import load_file_from_url
 
