@@ -331,6 +331,8 @@ tensorboard --logdir tb_logger
 
 Set `path.resume_state` in the YAML file to a state file from `experiments/train_RealESRNetx4_CP461_team_5h/training_states/`, then run the same training command again.
 
+The current run is paused at the latest fully saved checkpoint, iteration 9,000 of 45,000. Its generator weights and resume state are stored in Git LFS at `experiments/train_RealESRNetx4_CP461_team_5h/models/net_g_9000.pth` and `experiments/train_RealESRNetx4_CP461_team_5h/training_states/9000.state`. Set the config's `path.resume_state` to the `.state` path above before resuming. The training log had advanced beyond that save point before the process stopped, so iteration 9,000 is the exact resumable point.
+
 ### 5. Run inference with a trained checkpoint
 
 After training completes, use the generated generator checkpoint with the Real-ESRNet x4 architecture:
