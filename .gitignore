@@ -1,11 +1,19 @@
 # ignored folders
-datasets/*
-experiments/*
-results/*
-tb_logger/*
-wandb/*
-tmp/*
-weights/*
+datasets/
+experiments/
+results/
+tb_logger/
+wandb/
+tmp/
+weights/
+output/
+checkpoints/
+pretrain_models/
+DIV2K/
+Flickr2K/
+OTS/
+OST/
+data/
 
 version.py
 
