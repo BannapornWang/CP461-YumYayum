@@ -72,3 +72,9 @@ The `--tile` option reduces GPU memory use. Change the checkpoint path to an ear
 ### Evaluation, ablations, and report figures
 
 See [`project/README_eval_ablation_report.md`](project/README_eval_ablation_report.md) for paired and real-world evaluation, ablation config generation, blind-study setup, and report figure commands. Experiment result values are intentionally omitted until measured artifacts are available.
+
+### Deploy the Streamlit app
+
+In the existing `.venv312` training environment, install Streamlit once with `python -m pip install streamlit`, then run `python -m streamlit run app.py`. For Streamlit Community Cloud, select `app.py` as the entrypoint and choose Python 3.12 in Advanced settings. The root [`requirements.txt`](requirements.txt) includes the CPU-only app dependencies from [`streamlit_app/requirements.txt`](streamlit_app/requirements.txt); `requirements-package.txt` remains the Real-ESRGAN package dependency list used by `setup.py` and the package release workflow.
+
+The app downloads the official ESRGAN, Real-ESRNet, and Real-ESRGAN x4 checkpoints on first use. The team 52k checkpoint is ignored by Git, so upload it in the app sidebar to compare it after deployment. To enable NIQE and MUSIQ, add `-r requirements-iqa.txt` to `streamlit_app/requirements.txt`.
