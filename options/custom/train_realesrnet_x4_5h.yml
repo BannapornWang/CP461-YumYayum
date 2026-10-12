@@ -75,8 +75,8 @@ datasets:
 
     # data loader settings
     use_shuffle: true
-    num_worker_per_gpu: 4  # reduced to 4 for Windows stability
-    batch_size_per_gpu: 4  # reduced to fit RTX 3060 12GB
+    num_worker_per_gpu: 0  # reduced to 0 for Windows stability
+    batch_size_per_gpu: 0  # reduced to fit RTX 3060 12GB
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -97,7 +97,7 @@ path:
   pretrain_network_g: ~  # or path to pretrained weights if resuming
   param_key_g: params_ema
   strict_load_g: true
-  resume_state: ~  # Set to checkpoint path to resume training
+  resume_state: experiments/train_RealESRNetx4_CP461_team_5h/training_states/54000.state  # Set to checkpoint path to resume training
   experiments_root: experiments  # Directory for saving checkpoints/logs
 
 # training settings
@@ -114,7 +114,7 @@ train:
     milestones: [1000000]  # Reduce LR at 1M iterations
     gamma: 0.5  # Multiply LR by 0.5
 
-  total_iter: 45000  # ~5 hours based on measured RTX 3060 throughput
+  total_iter: 100000  # ~5 hours based on measured RTX 3060 throughput
   warmup_iter: -1  # No warmup
 
   # loss function settings
@@ -142,7 +142,7 @@ val:
 # logging settings
 logger:
   print_freq: 100  # Print loss every 100 iterations
-  save_checkpoint_freq: !!float 1e3  # Save checkpoint every 1,000 iterations
+  save_checkpoint_freq: !!float 2e3  # Save checkpoint every 2,000 iterations
   use_tb_logger: true  # Enable TensorBoard logging
   wandb:  # Weights & Biases logging (optional)
     project: ~  # Set to project name to enable wandb

@@ -72,7 +72,7 @@ def generate_metainfo_via_script(
 
     try:
         cmd = [
-            'python',
+            sys.executable,
             'scripts/generate_meta_info.py',
             '--input',
             str(input_folder),

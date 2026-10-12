@@ -241,7 +241,7 @@ def run_training(
 
     # Prepare training command
     cmd = [
-        'python',
+        sys.executable,
         'realesrgan/train.py',
         '-opt',
         str(config_path),

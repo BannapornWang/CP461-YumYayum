@@ -89,7 +89,6 @@ def evaluate_split(
     model_specs = [("Bicubic", Path())] + model_specs
     iqa = load_iqa(device) if use_iqa else {}
     rows: list[dict[str, Any]] = []
-    predictions: dict[str, dict[str, np.ndarray]] = {lr.stem: {} for lr, _ in pairs}
     for model_name, checkpoint in model_specs:
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(device)
@@ -115,7 +114,6 @@ def evaluate_split(
                 if pred.shape[:2] != hr.shape[:2]:
                     pred = cv2.resize(pred, (hr.shape[1], hr.shape[0]), interpolation=cv2.INTER_CUBIC)
             elapsed += time.perf_counter() - start
-            predictions[lr_path.stem][model_name] = pred
             record: dict[str, Any] = {
                 "split": split.name, "image": lr_path.name, "model": model_name,
                 "psnr": calculate_psnr(pred, hr, crop_border=4),
@@ -137,6 +135,8 @@ def evaluate_split(
             pred_dir = output / "predictions" / split.name / model_name
             pred_dir.mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(pred_dir / lr_path.name), pred)
+            del pred, hr, lr
+            gc.collect()
         peak = torch.cuda.max_memory_allocated(device) / (1024 ** 2) if device.type == "cuda" else 0.0
         params = sum(p.numel() for p in model.parameters()) if model is not None else 0
         for row in rows:
@@ -148,7 +148,7 @@ def evaluate_split(
         if device.type == "cuda":
             torch.cuda.empty_cache()
     if visualize:
-        write_visuals(split, pairs, predictions, output, crop_count, rows)
+        write_visuals(split, pairs, output, crop_count, rows)
     return rows
 
 
@@ -213,7 +213,7 @@ def evaluate_unpaired(
 
 
 def write_visuals(split: Path, pairs: list[tuple[Path, Path]],
-                  predictions: dict[str, dict[str, np.ndarray]], output: Path, crop_count: int,
+                  output: Path, crop_count: int,
                   rows: list[dict[str, Any]]) -> None:
     """Save best/worst versus bicubic panels with four to six zoom crops."""
     target = output / "visuals" / split.name
@@ -236,15 +236,17 @@ def write_visuals(split: Path, pairs: list[tuple[Path, Path]],
             continue
         lr = cv2.imread(str(lr_path))
         hr = cv2.imread(str(hr_path))
-        preds = predictions[lr_path.stem]
         panels: list[tuple[str, np.ndarray]] = [("Input", cv2.resize(lr, (hr.shape[1], hr.shape[0]), interpolation=cv2.INTER_NEAREST))]
-        panels.append(("Bicubic", preds["Bicubic"]))
+        bicubic_file = output / "predictions" / split.name / "Bicubic" / lr_path.name
+        panels.append(("Bicubic", cv2.imread(str(bicubic_file)) if bicubic_file.is_file() else np.zeros_like(hr)))
         aliases = {"ESRGAN": ("esrgan",), "BSRGAN": ("bsrgan", "realsr"),
                    "Ours": ("ours", "team", "realesrnet")}
+        model_dirs = [p for p in (output / "predictions" / split.name).iterdir() if p.is_dir() and p.name != "Bicubic"]
         for label, tokens in aliases.items():
-            match = next((name for name in preds if name != "Bicubic" and any(token in name.lower() for token in tokens)), None)
-            if match:
-                panels.append((label, preds[match]))
+            match_dir = next((p for p in model_dirs if any(token in p.name.lower() for token in tokens)), None)
+            pred_file = match_dir / lr_path.name if match_dir else None
+            if pred_file and pred_file.is_file():
+                panels.append((label, cv2.imread(str(pred_file))))
             else:
                 placeholder = np.zeros_like(hr)
                 cv2.putText(placeholder, f"Not run: {label}", (20, hr.shape[0] // 2),
@@ -368,7 +370,10 @@ def main() -> None:
     """Run paired evaluation and write requested artifacts."""
     args = parse_args()
     random.seed(SEED)
-    np.random.seed(SEED)
+    try:
+        np.random.seed(SEED)
+    except Exception:
+        pass
     torch.manual_seed(SEED)
     device = torch.device(args.device)
     model_specs = []

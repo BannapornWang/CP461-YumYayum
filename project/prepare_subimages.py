@@ -90,7 +90,7 @@ def extract_subimages_for_dataset(
     # Call scripts/extract_subimages_standalone.py (no basicsr dependency)
     try:
         cmd = [
-            'python',
+            sys.executable,
             'scripts/extract_subimages_standalone.py',
             '--input',
             str(input_dir),
@@ -178,7 +178,7 @@ def extract_all_datasets(
             'output': output_base_dir / 'Flickr2K_sub',
         },
         'ots': {
-            'input': base_dir / 'OTS_clear',
+            'input': base_dir / 'OTS_clear' if (base_dir / 'OTS_clear').exists() else base_dir / 'clear',
             'output': output_base_dir / 'OTS_clear_sub',
         },
     }
@@ -192,6 +192,10 @@ def extract_all_datasets(
             continue
 
         config = dataset_configs[dataset_name]
+        if not config['input'].exists() and dataset_name == 'ots':
+            logger.warning(f"Optional dataset '{dataset_name}' not found at {config['input']}, skipping.")
+            continue
+
         success, stats = extract_subimages_for_dataset(
             dataset_name,
             config['input'],
