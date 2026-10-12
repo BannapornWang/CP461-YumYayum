@@ -134,7 +134,8 @@ def load_sr_model(model_key: str, tile: int = 256):
         raise ValueError(f"Unknown model_key: {model_key}")
 
 def image_to_base64(img_bgr: np.ndarray, ext: str = ".jpg") -> str:
-    success, buffer = cv2.imencode(ext, img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 95] if ext in [".jpg", ".jpeg"] else [])
+    params = [cv2.IMWRITE_JPEG_QUALITY, 95] if ext in [".jpg", ".jpeg"] else []
+    success, buffer = cv2.imencode(ext, img_bgr, params)
     if not success:
         raise ValueError("Failed to encode image")
     b64_str = base64.b64encode(buffer).decode("utf-8")
@@ -154,6 +155,12 @@ def api_status():
             {"id": "team_9000", "name": "CP461 Team Real-ESRNet (9k iters)", "desc": "Trained by Team YumYayum (5-hour run checkpoint)"},
             {"id": "realesrgan_x4plus", "name": "Real-ESRGAN x4plus (Official)", "desc": "Full official pre-trained GAN weights"},
             {"id": "bicubic", "name": "Bicubic Interpolation 4x", "desc": "Standard mathematical baseline (No Neural Net)"}
+        ],
+        "reports": [
+            {"id": "benchmark", "name": "Benchmark Results (20 Images)", "url": "/benchmark"},
+            {"id": "eda", "name": "EDA & Data Exploration", "url": "/eda"},
+            {"id": "comparison_table", "name": "20-Image Comparison Table", "url": "/comparison-table"},
+            {"id": "gallery", "name": "Model Visual Gallery", "url": "/gallery"}
         ]
     }
 
@@ -272,7 +279,9 @@ async def compare_all_models(
         raise HTTPException(status_code=400, detail="No image provided")
 
     h, w = img_bgr.shape[:2]
-    ext = ".jpg" if img_bgr.ndim < 3 or img_bgr.shape[2] != 4 else ".png"
+    # Use PNG only if image has alpha channel (4 channels); otherwise JPEG
+    has_alpha = img_bgr.ndim == 3 and img_bgr.shape[2] == 4
+    ext = ".png" if has_alpha else ".jpg"
     input_b64 = image_to_base64(img_bgr, ext=ext)
 
     results = {}
@@ -317,6 +326,35 @@ def serve_index():
     if os.path.isfile(index_file):
         return FileResponse(index_file)
     return {"message": "Welcome to CP461 YumYayum Super-Resolution API"}
+
+@app.get("/benchmark")
+def serve_benchmark():
+    file_path = os.path.join(STATIC_DIR, "benchmark_results.html")
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Benchmark results not found")
+
+@app.get("/eda")
+def serve_eda():
+    file_path = os.path.join(STATIC_DIR, "eda_dashboard.html")
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="EDA dashboard not found")
+
+@app.get("/comparison-table")
+def serve_comparison_table():
+    file_path = os.path.join(STATIC_DIR, "model_comparison_20_table.html")
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Comparison table not found")
+
+@app.get("/gallery")
+def serve_gallery():
+    file_path = os.path.join(STATIC_DIR, "model_comparison_gallery.html")
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="Model comparison gallery not found")
+
 
 if __name__ == "__main__":
     import uvicorn

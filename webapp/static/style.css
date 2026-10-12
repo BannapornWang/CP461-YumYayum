@@ -624,3 +624,277 @@ body {
   background:var(--a2); width:24px; border-radius:4px;
   box-shadow:0 0 8px rgba(6,182,212,.6);
 }
+
+/* ---- Reports Menu & Links ---- */
+.nav-reports-wrap {
+  position: relative;
+  display: inline-block;
+}
+.nav-reports-btn {
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  color: #a5b4fc;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .2s;
+}
+.nav-reports-btn:hover {
+  background: rgba(99,102,241,0.25);
+  color: #fff;
+  border-color: rgba(99,102,241,0.5);
+}
+.reports-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border2);
+  border-radius: var(--r-md);
+  padding: 8px;
+  min-width: 270px;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+.reports-dropdown-menu.show {
+  display: flex;
+}
+.reports-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--txt);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all .2s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+.reports-dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: #38bdf8;
+  transform: translateX(4px);
+}
+.reports-dropdown-item .item-icon {
+  font-size: 1.15rem;
+}
+.reports-dropdown-item .item-text {
+  display: flex;
+  flex-direction: column;
+}
+.reports-dropdown-item .item-title {
+  font-weight: 600;
+  font-size: 0.84rem;
+}
+.reports-dropdown-item .item-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---- Report Feature Cards in Sections ---- */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.report-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all .25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.report-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.06);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.4);
+}
+.report-card-top {
+  margin-bottom: 14px;
+}
+.report-card-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.badge-cyan { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+.badge-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-indigo { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+.badge-purple { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+.report-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #f8fafc;
+}
+.report-card-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.report-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.btn-report-preview, .btn-report-open {
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-report-preview {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border2);
+  color: var(--txt);
+}
+.btn-report-preview:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+.btn-report-open {
+  background: var(--grad);
+  border: none;
+  color: #ffffff;
+}
+.btn-report-open:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ---- Modal Preview ---- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 18, 0.88);
+  backdrop-filter: blur(16px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal-overlay.show {
+  display: flex;
+}
+.modal-window {
+  width: 95vw;
+  max-width: 1400px;
+  height: 90vh;
+  background: #0d1322;
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border);
+}
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+.modal-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-modal-action {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  color: var(--txt);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all .2s;
+}
+.btn-modal-action:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #38bdf8;
+}
+.btn-modal-close {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all .2s;
+}
+.btn-modal-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+.modal-iframe-wrap {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #ffffff;
+}
+.modal-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+

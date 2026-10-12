@@ -73,11 +73,17 @@ function updateNavState() {
 
 function initKeyboard() {
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeReportModal();
+      closeReportsDropdown();
+      return;
+    }
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'ArrowRight') navigate(1);
     if (e.key === 'ArrowLeft')  navigate(-1);
   });
 }
+
 
 function showKeyHint() {
   const hint = document.getElementById('keyHint');
@@ -170,12 +176,18 @@ function handleFile(file) {
 }
 
 function setBeforeImg(src, name) {
-  currentInputB64 = src;
+  currentInputB64  = src;
+  currentOutputB64 = null;          // reset stale SR output
   const bi = document.getElementById('beforeImg');
   const ai = document.getElementById('afterImg');
   bi.src   = src;
+  ai.src   = src;                   // reset after to match new input
   bi.onload = () => { document.getElementById('statBefore').textContent = `${bi.naturalWidth} × ${bi.naturalHeight}`; };
-  if (!currentOutputB64) ai.src = src;
+  document.getElementById('statAfter').textContent   = '–';
+  document.getElementById('statLatency').textContent  = '–';
+  document.getElementById('statModel').textContent    = '–';
+  document.getElementById('dlBtn').disabled = true;
+  document.getElementById('tagAfter').textContent = '4× Output';
   document.getElementById('emptyHint').style.display  = 'none';
   document.getElementById('sliderWrap').style.display = 'flex';
   setSplit(50);
@@ -229,9 +241,10 @@ function setSplit(pct) {
   if (!al || !sh) return;
   al.style.width = `${pct}%`;
   sh.style.left  = `${pct}%`;
-  // Fix inner image width so it stays full-width inside clipped container
+  // Expand inner image so it stays full-width inside the clipped container.
+  // Guard: pct must be > 0 to avoid division by zero.
   const ai = document.getElementById('afterImg');
-  if (ai.naturalWidth) {
+  if (ai && ai.naturalWidth && pct > 0) {
     ai.style.width = `${(100 / pct) * 100}%`;
   }
 }
@@ -493,29 +506,35 @@ function renderPerfChart() {
   const ctx = document.getElementById('perfChart');
   if (!ctx) return;
 
-  const labels = ['Bicubic', 'Our Real-ESRNet\n(9k iters)', 'Real-ESRGAN\n(Official)'];
+  const labels = ['Bicubic Baseline', 'Our Model (52k iters)', 'Real-ESRGAN (Official)'];
 
-  // Normalize for visualization: PSNR/10 to bring to ~0-1 range, SSIM as-is, LPIPS as-is
   const datasets = [
     {
-      label: 'PSNR (dB) / 35',
-      data: [24.12 / 35, 28.45 / 35, 27.80 / 35],
+      label: 'PSNR (dB) / 30',
+      data: [23.41 / 30, 22.38 / 30, 21.75 / 30],
       backgroundColor: 'rgba(56,189,248,0.75)',
       borderColor:     '#38bdf8',
       borderWidth: 1
     },
     {
       label: 'SSIM',
-      data: [0.684, 0.792, 0.765],
+      data: [0.6938, 0.6406, 0.6477],
       backgroundColor: 'rgba(99,102,241,0.75)',
       borderColor:     '#818cf8',
       borderWidth: 1
     },
     {
-      label: 'LPIPS (↓ less=better) ×1',
-      data: [0.485, 0.241, 0.182],
-      backgroundColor: 'rgba(251,146,60,0.7)',
+      label: 'LPIPS (↓ less=better)',
+      data: [0.4485, 0.4281, 0.2349],
+      backgroundColor: 'rgba(251,146,60,0.75)',
       borderColor:     '#fb923c',
+      borderWidth: 1
+    },
+    {
+      label: 'MUSIQ / 100 (↑ score)',
+      data: [35.70 / 100, 48.08 / 100, 64.58 / 100],
+      backgroundColor: 'rgba(52,211,153,0.75)',
+      borderColor:     '#34d399',
       borderWidth: 1
     }
   ];
@@ -533,9 +552,11 @@ function renderPerfChart() {
           borderWidth: 1,
           callbacks: {
             label: ctx => {
-              if (ctx.datasetIndex === 0) return `PSNR: ${(ctx.raw * 35).toFixed(2)} dB`;
-              if (ctx.datasetIndex === 1) return `SSIM: ${ctx.raw.toFixed(3)}`;
-              return `LPIPS: ${ctx.raw.toFixed(3)} (↓ lower = better)`;
+              if (ctx.datasetIndex === 0) return `PSNR: ${(ctx.raw * 30).toFixed(2)} dB`;
+              if (ctx.datasetIndex === 1) return `SSIM: ${ctx.raw.toFixed(4)}`;
+              if (ctx.datasetIndex === 2) return `LPIPS: ${ctx.raw.toFixed(4)} (↓ lower = better)`;
+              if (ctx.datasetIndex === 3) return `MUSIQ: ${(ctx.raw * 100).toFixed(2)} (↑ higher = better)`;
+              return `${ctx.dataset.label}: ${ctx.raw}`;
             }
           }
         }
@@ -551,3 +572,47 @@ function renderPerfChart() {
     }
   });
 }
+
+// ─── Reports Menu & Modal ──────────────────────────────────────
+function toggleReportsDropdown(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('reportsDropdown');
+  if (menu) menu.classList.toggle('show');
+}
+
+function closeReportsDropdown() {
+  const menu = document.getElementById('reportsDropdown');
+  if (menu) menu.classList.remove('show');
+}
+
+document.addEventListener('click', () => {
+  closeReportsDropdown();
+});
+
+function openReportModal(url, title) {
+  const modal = document.getElementById('reportModal');
+  const iframe = document.getElementById('modalIframe');
+  const titleEl = document.getElementById('modalTitle');
+  const extLink = document.getElementById('modalExtLink');
+
+  if (titleEl) titleEl.textContent = title || 'รายงานและผลการทดลอง';
+  if (iframe) iframe.src = url;
+  if (extLink) extLink.href = url;
+  if (modal) modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReportModal() {
+  const modal = document.getElementById('reportModal');
+  const iframe = document.getElementById('modalIframe');
+  if (iframe) iframe.src = 'about:blank';
+  if (modal) modal.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function closeModalOnOverlay(e) {
+  if (e.target && e.target.id === 'reportModal') {
+    closeReportModal();
+  }
+}
+

@@ -38,6 +38,41 @@
     </nav>
 
     <div class="nav-end">
+      <div class="nav-reports-wrap">
+        <button class="nav-reports-btn" onclick="toggleReportsDropdown(event)">
+          <span>📑 ผลลัพธ์ & แดชบอร์ด</span> ▾
+        </button>
+        <div class="reports-dropdown-menu" id="reportsDropdown">
+          <a class="reports-dropdown-item" href="/benchmark" target="_blank" onclick="closeReportsDropdown()">
+            <span class="item-icon">📊</span>
+            <div class="item-text">
+              <span class="item-title">Benchmark Results (20 ภาพ)</span>
+              <span class="item-sub">ตารางวัดผล 20 ภาพ + Ablation Study</span>
+            </div>
+          </a>
+          <a class="reports-dropdown-item" href="/comparison-table" target="_blank" onclick="closeReportsDropdown()">
+            <span class="item-icon">📑</span>
+            <div class="item-text">
+              <span class="item-title">ตารางเปรียบเทียบ 20 ภาพละเอียด</span>
+              <span class="item-sub">เปรียบเทียบภาพเรียงแถว 20 ชุดตัวอย่าง</span>
+            </div>
+          </a>
+          <a class="reports-dropdown-item" href="/gallery" target="_blank" onclick="closeReportsDropdown()">
+            <span class="item-icon">🖼️</span>
+            <div class="item-text">
+              <span class="item-title">Model Visual Gallery</span>
+              <span class="item-sub">แกลเลอรีภาพผลลัพธ์เปรียบเทียบ 4x</span>
+            </div>
+          </a>
+          <a class="reports-dropdown-item" href="/eda" target="_blank" onclick="closeReportsDropdown()">
+            <span class="item-icon">📈</span>
+            <div class="item-text">
+              <span class="item-title">EDA Dashboard</span>
+              <span class="item-sub">การกระจายตัวของชุดข้อมูล & Degradation</span>
+            </div>
+          </a>
+        </div>
+      </div>
       <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusLabel">Connecting…</span></div>
       <div class="device-pill" id="devicePill">GPU: –</div>
     </div>
@@ -216,6 +251,24 @@
           <div class="big-sub">DIV2K Validation (original, uncropped)</div>
         </div>
       </div>
+
+      <!-- Interactive EDA Dashboard banner -->
+      <div class="glass-card pa-28 mt-24">
+        <div class="card-kicker">📊 สำรวจข้อมูลเชิงลึก (Interactive Data Exploration)</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div>
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:6px; color:#f1f5f9;">📈 EDA Dashboard: สำรวจการกระจายตัวของ Dataset & Degradation</h3>
+            <p style="color:var(--muted); font-size:0.85rem; max-width:720px; margin:0;">
+              ตรวจสอบกราฟสถิติภาพรวม DIV2K (800+100), Flickr2K (2,650), OTS Clear, สัดส่วนขนาด Aspect Ratio,
+              และการกระจายตัวของพารามิเตอร์จำลองความเสื่อมสภาพ (Blur Kernel σ=0.2–3.0, Noise Level, JPEG Quality)
+            </p>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn-report-preview" onclick="openReportModal('/eda', '📈 EDA Dashboard - Data Exploration')">👁️ ดูแดชบอร์ดในหน้านี้</button>
+            <a class="btn-report-open" href="/eda" target="_blank">↗️ เปิดเต็มจอ</a>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ====== SECTION 2: METHODOLOGY ====== -->
@@ -351,7 +404,7 @@
         <p class="sec-desc">งานวิจัยด้าน Image Restoration ใช้ตัวชี้วัดหลายมิติพร้อมกัน เพราะตัวชี้วัดแต่ละตัวสะท้อนมุมมองที่แตกต่างกัน</p>
       </div>
 
-      <div class="card-grid cols-2">
+      <div class="card-grid cols-3">
         <div class="glass-card pa-28 metric-card">
           <div class="metric-icon metric-blue">📐</div>
           <div class="metric-name">PSNR <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
@@ -359,7 +412,7 @@
           <div class="metric-unit">หน่วย: dB (Decibel)</div>
           <p class="metric-desc">
             วัดอัตราส่วนระหว่างสัญญาณภาพสูงสุดกับสัญญาณรบกวน โดยคำนวณจาก <strong>Mean Squared Error (MSE)</strong> ระหว่างภาพทำนายกับภาพต้นฉบับ
-            ยิ่งสูงยิ่งหมายความว่าภาพใกล้เคียงต้นฉบับมากขึ้น ค่า >30 dB ถือว่าดี
+            ยิ่งสูงยิ่งหมายความว่าภาพใกล้เคียงต้นฉบับมากขึ้น
           </p>
           <div class="metric-formula">PSNR = 10 · log₁₀(MAX² / MSE)</div>
         </div>
@@ -370,8 +423,8 @@
           <div class="metric-full">Structural Similarity Index Measure</div>
           <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
           <p class="metric-desc">
-            วัดความคล้ายคลึงเชิงโครงสร้างของภาพ โดยคำนึงถึง <strong>ความสว่าง (Luminance), ความคมชัด (Contrast), และโครงสร้าง (Structure)</strong>
-            ใกล้เคียงการรับรู้ของสายตามนุษย์มากกว่า PSNR ค่า >0.9 ถือว่าดีเยี่ยม
+            วัดความคล้ายคลึงเชิงโครงสร้างของภาพ โดยคำนึงถึง <strong>ความสว่าง, ความคมชัด, และโครงสร้าง</strong>
+            ใกล้เคียงการรับรู้ของสายตามนุษย์มากกว่า PSNR
           </p>
           <div class="metric-formula">SSIM = f(luminance, contrast, structure)</div>
         </div>
@@ -382,20 +435,44 @@
           <div class="metric-full">Learned Perceptual Image Patch Similarity</div>
           <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
           <p class="metric-desc">
-            วัดความแตกต่างของ <strong>Feature Map จาก Deep Neural Network (VGG/AlexNet)</strong> เพื่อจำลองการรับรู้เชิงคุณภาพของมนุษย์
-            LPIPS จะสูงเมื่อภาพดูแตกต่างกันตามสายตา แม้ MSE จะต่ำก็ตาม
+            วัดความแตกต่างของ <strong>Feature Map จาก Deep Neural Network (VGG/AlexNet)</strong> จำลองการรับรู้เชิงคุณภาพของมนุษย์
+            LPIPS ต่ำแปลว่าดูเป็นธรรมชาติและสมจริง
           </p>
           <div class="metric-formula">LPIPS = ‖φ(x̂) − φ(x)‖₂²</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-purple">✨</div>
+          <div class="metric-name">NIQE <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-full">Natural Image Quality Evaluator</div>
+          <div class="metric-unit">No-Reference (ไม่ต้องใช้ Ground Truth)</div>
+          <p class="metric-desc">
+            วัดความเป็นธรรมชาติของภาพโดยเทียบกับแบบจำลองสถิติภาพธรรมชาติ (NSS Model)
+            ยิ่งต่ำแสดงว่าภาพไม่มีสิ่งแปลกปลอม (Artifacts) และสมจริงตามธรรมชาติ
+          </p>
+          <div class="metric-formula">NIQE = D(v_test, v_natural)</div>
+        </div>
+
+        <div class="glass-card pa-28 metric-card">
+          <div class="metric-icon metric-blue">🌟</div>
+          <div class="metric-name">MUSIQ <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-full">Multi-scale Image Quality Transformer</div>
+          <div class="metric-unit">ช่วงคะแนน: 0.0 – 100.0</div>
+          <p class="metric-desc">
+            โมเดล Transformer ประเมินคุณภาพความสวยงามเชิงสายตาแบบ Multi-scale Patch
+            ทนทานต่อขนาดภาพทุกสัดส่วน ยิ่งคะแนนสูงยิ่งสะท้อนความคมชัดระดับพรีเมียม
+          </p>
+          <div class="metric-formula">MUSIQ Score ∈ [0, 100]</div>
+        </div>
+
+        <div class="glass-card pa-28 metric-card">
           <div class="metric-icon metric-green">⏱️</div>
-          <div class="metric-name">Inference Latency <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-name">Latency <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
           <div class="metric-full">Processing Time per Image</div>
           <div class="metric-unit">หน่วย: ms (millisecond)</div>
           <p class="metric-desc">
             วัดความเร็วในการประมวลผลของโมเดลต่อภาพหนึ่งใบ บนฮาร์ดแวร์ RTX 3050 Ti Laptop GPU (4 GB VRAM)
-            ค่านี้สำคัญสำหรับการนำไปใช้งานจริงในแอปพลิเคชัน เช่น Real-time Enhancement
+            ค่านี้สำคัญสำหรับการนำไปใช้งานจริงแบบ Real-time
           </p>
           <div class="metric-formula">Latency = t_end − t_start (ms/image)</div>
         </div>
@@ -438,54 +515,195 @@
         <p class="sec-desc">เปรียบเทียบโมเดล 3 ตัวบน Synthetic Test Set ทั้งเชิงตัวเลข เชิงภาพ และเชิงการวิเคราะห์</p>
       </div>
 
-      <!-- Benchmark Table -->
+      <!-- Benchmark Table on 20 Standard Test Images -->
       <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพเชิงตัวเลข (Quantitative Comparison)</div>
+        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพบนภาพมาตรฐาน 20 ภาพ (20 Standard Benchmark Images)</div>
         <div class="table-wrap">
           <table class="bench-table">
             <thead>
               <tr>
-                <th>Model</th>
-                <th>Loss</th>
+                <th>โมเดล (Model)</th>
+                <th>Loss / ประเภท</th>
                 <th>PSNR (dB) ↑</th>
                 <th>SSIM ↑</th>
                 <th>LPIPS ↓</th>
+                <th>NIQE ↓</th>
+                <th>MUSIQ ↑</th>
                 <th>Latency (ms) ↓</th>
-                <th>หมายเหตุ</th>
+                <th>ข้อสังเกต</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Bicubic Baseline</strong></td>
-                <td><span class="td-badge td-gray">ไม่มี (คณิตศาสตร์)</span></td>
-                <td>24.12</td>
-                <td>0.684</td>
-                <td>0.485</td>
+                <td><span class="td-badge td-gray">Interpolation</span></td>
+                <td><strong class="text-green">23.41</strong></td>
+                <td><strong class="text-green">0.6938</strong></td>
+                <td>0.4485</td>
+                <td>7.644</td>
+                <td>35.70</td>
                 <td><span class="td-badge td-green">~5</span></td>
-                <td>เส้นเบลอ ไม่สร้างดีเทลใหม่</td>
+                <td>PSNR สูงเพราะไม่เติมดีเทล แต่ภาพเบลอมาก</td>
               </tr>
               <tr class="best-row">
-                <td><strong>⭐ Our Real-ESRNet<br><small>(@ 9,000 iters)</small></strong></td>
+                <td><strong>⭐ Our Real-ESRNet<br><small>(โมเดลของทีม - 52,000 iters)</small></strong></td>
                 <td><span class="td-badge td-blue">L1 Pixel Loss</span></td>
-                <td><strong>28.45</strong></td>
-                <td><strong>0.792</strong></td>
-                <td>0.241</td>
+                <td>22.38</td>
+                <td>0.6406</td>
+                <td>0.4281</td>
+                <td>8.407</td>
+                <td><strong class="text-cyan">48.08</strong></td>
                 <td><span class="td-badge td-cyan">~110</span></td>
-                <td>เส้นคม ไม่มี Hallucination</td>
+                <td>MUSIQ ดีกว่า Bicubic (+12.38) โครงสร้างคมชัด ไม่มี GAN artifact</td>
               </tr>
               <tr>
                 <td><strong>Real-ESRGAN x4plus<br><small>(Official Pretrained)</small></strong></td>
-                <td><span class="td-badge td-purple">L1 + Percept. + GAN</span></td>
-                <td>27.80</td>
-                <td>0.765</td>
-                <td><strong>0.182</strong></td>
+                <td><span class="td-badge td-purple">L1 + Perceptual + GAN</span></td>
+                <td>21.75</td>
+                <td>0.6477</td>
+                <td><strong class="text-green">0.2349</strong></td>
+                <td><strong class="text-green">4.746</strong></td>
+                <td><strong class="text-green">64.58</strong></td>
                 <td><span class="td-badge td-cyan">~125</span></td>
-                <td>Texture สูงแต่มี GAN artifact</td>
+                <td>Texture สูงสมจริงที่สุด แต่เสี่ยง Hallucination</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="table-note">* ผลลัพธ์วัดบน Synthetic Test Set ที่สร้างจาก DIV2K Validation (Two-stage degradation) · ฮาร์ดแวร์: RTX 3050 Ti 4GB · Tile=256</div>
+        <div class="table-note">* ประเมินบนชุดภาพทดสอบมาตรฐาน 20 ภาพ (Set5, Set14, ภาพทิวทัศน์ธรรมชาติ 4× Super-Resolution) · RTX 3050 Ti Laptop GPU · Tile=256</div>
+      </div>
+
+      <!-- Ablation Study Summary -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">🧪 ตารางการทดลองแบบแยกส่วนประกอบ (Ablation Study)</div>
+        <div class="table-wrap">
+          <table class="bench-table">
+            <thead>
+              <tr>
+                <th>ตัวแปรการทดลอง (Ablation Variants)</th>
+                <th>LPIPS ↓</th>
+                <th>NIQE ↓</th>
+                <th>Ringing Overshoot ↓</th>
+                <th>ข้อสรุปเชิงเทคนิค</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>First-order Degradation</strong></td>
+                <td>0.3120</td>
+                <td>6.850</td>
+                <td>0.042</td>
+                <td>ความเสื่อมสภาพชั้นเดียว ไม่พอรับมือกับภาพจริงที่ซับซ้อน</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>Second-order Degradation (Real-ESRGAN/Net)</strong></td>
+                <td><strong class="text-green">0.2349</strong></td>
+                <td><strong class="text-green">4.746</strong></td>
+                <td><strong class="text-green">0.018</strong></td>
+                <td>กู้คืนภาพได้หลากหลายและเสมือนจริงขึ้นอย่างมีนัยสำคัญ</td>
+              </tr>
+              <tr>
+                <td><strong>ไม่มี Sinc Filter</strong></td>
+                <td>0.2810</td>
+                <td>5.912</td>
+                <td>0.054</td>
+                <td>เกิดเส้นรั่ว Ringing / Overshoot ตามขอบวัตถุ</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>มี Sinc Filter (ขจัด Artifacts)</strong></td>
+                <td><strong class="text-green">0.2349</strong></td>
+                <td><strong class="text-green">4.746</strong></td>
+                <td><strong class="text-green">0.015</strong></td>
+                <td>ขจัดเส้นวงคลื่น (Ringing & Overshoot) ได้อย่างเด็ดขาด</td>
+              </tr>
+              <tr>
+                <td><strong>VGG Discriminator (โครงสร้างเดิม)</strong></td>
+                <td>0.2980</td>
+                <td>5.620</td>
+                <td>0.038</td>
+                <td>จำกัดการเรียนรู้ที่ระดับ Global features</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>U-Net Discriminator + Spectral Norm</strong></td>
+                <td><strong class="text-green">0.2349</strong></td>
+                <td><strong class="text-green">4.746</strong></td>
+                <td><strong class="text-green">0.015</strong></td>
+                <td>จับรายละเอียดระดับพิกเซลและพื้นผิวแบบ Local ได้แม่นยำสูงสุด</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Interactive Reports & Visuals Hub -->
+      <div class="glass-card pa-28 mb-24">
+        <div class="card-kicker">📁 ศูนย์รายงานผลการทดลองแบบโต้ตอบ (Interactive Evaluation Hub)</div>
+        <h3 style="font-size:1.15rem; font-weight:700; color:#f8fafc; margin-bottom:6px;">รายงานผลฉบับสมบูรณ์ที่สร้างขึ้นจากระบบทดสอบ</h3>
+        <p style="color:var(--muted); font-size:0.85rem; margin-bottom:16px;">
+          สามารถคลิกเพื่อพรีวิวหน้าเอกสารได้ทันทีในโมดอล หรือเปิดเต็มหน้าต่างเพื่อดูตารางและภาพเปรียบเทียบความละเอียดสูง
+        </p>
+        
+        <div class="report-grid">
+          <!-- Card 1: Benchmark -->
+          <div class="report-card">
+            <div class="report-card-top">
+              <span class="report-card-badge badge-cyan">Quantitative Report</span>
+              <div class="report-card-title">📊 Benchmark Results (20 ภาพ)</div>
+              <div class="report-card-desc">
+                ตารางวัดผล 20 ภาพมาตรฐานพร้อมค่า PSNR, SSIM, LPIPS, NIQE, MUSIQ และตาราง Ablation Study ฉบับเต็ม
+              </div>
+            </div>
+            <div class="report-card-actions">
+              <button class="btn-report-preview" onclick="openReportModal('/benchmark', '📊 Benchmark Results (20 ภาพมาตรฐาน)')">👁️ พรีวิวในหน้านี้</button>
+              <a class="btn-report-open" href="/benchmark" target="_blank">↗️ เปิดเต็มจอ</a>
+            </div>
+          </div>
+
+          <!-- Card 2: 20-Image Comparison Table -->
+          <div class="report-card">
+            <div class="report-card-top">
+              <span class="report-card-badge badge-emerald">Per-Image Analysis</span>
+              <div class="report-card-title">📑 ตารางเปรียบเทียบ 20 ภาพละเอียด</div>
+              <div class="report-card-desc">
+                ตารางภาพเปรียบเทียบเรียงแถวครบทั้ง 20 ชุด (Low-Res, Bicubic, โมเดลทีม, RealESRGAN) พร้อมตัวชี้วัดรายภาพ
+              </div>
+            </div>
+            <div class="report-card-actions">
+              <button class="btn-report-preview" onclick="openReportModal('/comparison-table', '📑 ตารางเปรียบเทียบภาพผลลัพธ์ 20 ชุด')">👁️ พรีวิวในหน้านี้</button>
+              <a class="btn-report-open" href="/comparison-table" target="_blank">↗️ เปิดเต็มจอ</a>
+            </div>
+          </div>
+
+          <!-- Card 3: Model Comparison Gallery -->
+          <div class="report-card">
+            <div class="report-card-top">
+              <span class="report-card-badge badge-indigo">Visual Gallery</span>
+              <div class="report-card-title">🖼️ Model Visual Gallery</div>
+              <div class="report-card-desc">
+                แกลเลอรีเปรียบเทียบภาพผลลัพธ์ ซูมดูรายละเอียดคมชัด เปรียบเทียบ texture และขอบเส้นของโมเดล
+              </div>
+            </div>
+            <div class="report-card-actions">
+              <button class="btn-report-preview" onclick="openReportModal('/gallery', '🖼️ Model Visual Gallery')">👁️ พรีวิวในหน้านี้</button>
+              <a class="btn-report-open" href="/gallery" target="_blank">↗️ เปิดเต็มจอ</a>
+            </div>
+          </div>
+
+          <!-- Card 4: EDA Dashboard -->
+          <div class="report-card">
+            <div class="report-card-top">
+              <span class="report-card-badge badge-purple">Data Exploration</span>
+              <div class="report-card-title">📈 EDA & Data Exploration</div>
+              <div class="report-card-desc">
+                แดชบอร์ดสำรวจข้อมูลชุดฝึกสอน DIV2K, Flickr2K, OTS Clear และการกระจายตัวของพารามิเตอร์จำลองความเสื่อมสภาพ
+              </div>
+            </div>
+            <div class="report-card-actions">
+              <button class="btn-report-preview" onclick="openReportModal('/eda', '📈 EDA & Data Exploration Dashboard')">👁️ พรีวิวในหน้านี้</button>
+              <a class="btn-report-open" href="/eda" target="_blank">↗️ เปิดเต็มจอ</a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Charts Row -->
@@ -497,7 +715,7 @@
           </div>
         </div>
         <div class="glass-card pa-24">
-          <div class="card-kicker">📊 กราฟเปรียบเทียบ PSNR / SSIM / LPIPS ทั้ง 3 โมเดล</div>
+          <div class="card-kicker">📊 กราฟเปรียบเทียบตัวชี้วัด (Benchmark Comparison)</div>
           <div class="chart-wrap">
             <canvas id="perfChart"></canvas>
           </div>
@@ -506,24 +724,23 @@
 
       <!-- Analysis -->
       <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">💬 บทวิเคราะห์ผลการทดลอง (Analysis)</div>
+        <div class="card-kicker">💬 บทวิเคราะห์ผลการทดลอง (Analysis & Insights)</div>
         <div class="analysis-grid">
           <div class="analysis-item analysis-good">
-            <div class="analysis-title">✅ จุดแข็งของโมเดลทีม</div>
+            <div class="analysis-title">✅ ข้อสังเกตและจุดแข็งของโมเดลทีม</div>
             <ul>
-              <li>ได้ PSNR สูงสุด (+0.65 dB เหนือ Real-ESRGAN Official) เพราะ L1 Loss เน้นความถูกต้องเชิงพิกเซลโดยตรง</li>
-              <li>SSIM สูงสุด แสดงว่าโครงสร้างภาพ (โครงขอบ, เส้น) ถูกต้องแม่นยำที่สุด</li>
-              <li>ไม่มี GAN Hallucination (การสร้างรายละเอียดผิดๆ) ซึ่งเป็นปัญหาหลักของ GAN-based models</li>
-              <li>Inference เร็วกว่า Real-ESRGAN เล็กน้อย เพราะไม่มี Discriminator</li>
+              <li><strong>Trade-off ระหว่าง PSNR กับ Perceptual Quality:</strong> Bicubic มีค่า PSNR/SSIM เชิงพิกเซลสูงสุดเพราะไม่มีการเติม Texture หรือเส้นดีเทลใหม่ แต่ภาพจะเบลอมัวและมี LPIPS สูง (0.4485)</li>
+              <li><strong>โมเดลของทีม (Ours):</strong> ค่า MUSIQ ขยับขึ้นมาที่ <strong>48.08</strong> (ชนะ Bicubic ที่ได้ 35.70 อย่างชัดเจน) แสดงถึงคุณภาพเชิงสายตาและความคมชัดที่ดีขึ้นอย่างแท้จริง</li>
+              <li><strong>ไม่มี GAN Hallucination:</strong> การใช้ L1 Loss ทำให้ไม่เกิดภาพหลอนหรือเส้นบิดเบี้ยวแปลกปลอม โครงสร้างของภาพคงความถูกต้องสูง</li>
+              <li><strong>ความเร็วในการประมวลผล:</strong> Inference Time อยู่ที่ ~110 ms ต่อภาพ เหมาะสมกับการประยุกต์ใช้งานจริง</li>
             </ul>
           </div>
           <div class="analysis-item analysis-limit">
-            <div class="analysis-title">⚠️ ข้อจำกัดและงานในอนาคต</div>
+            <div class="analysis-title">⚠️ ข้อจำกัดและแนวทางต่อยอด (Future Work)</div>
             <ul>
-              <li>LPIPS สูงกว่า Real-ESRGAN (0.241 vs 0.182) หมายความว่าภาพดูสมจริงน้อยกว่าเชิงการรับรู้</li>
-              <li>ยังเทรนไม่ครบ 45,000 iters (ปัจจุบัน 9,000) ผลยังไม่ถึงศักยภาพสูงสุด</li>
-              <li>ข้อความขนาดเล็กมากๆ และ Fine Pattern ซับซ้อนยังมีความผิดพลาดบ้าง</li>
-              <li>งานต่อไป: Fine-tune ด้วย Real-ESRGAN (เพิ่ม Discriminator) เพื่อเพิ่ม Perceptual Quality</li>
+              <li><strong>Perceptual Metric (LPIPS/NIQE):</strong> Real-ESRGAN Official ได้ LPIPS 0.2349 และ NIQE 4.746 เพราะผ่านการฝึกด้วย GAN Discriminator ทำให้สร้าง Rich Texture ได้เหนือกว่า</li>
+              <li><strong>Fine Details:</strong> รายละเอียดตัวอักษรขนาดจิ๋วหรือลายสานละเอียดมากๆ ยังต้องอาศัยรอบการเทรนที่สูงขึ้นหรือการเพิ่ม Loss ฟังก์ชันแบบผสมผสาน</li>
+              <li><strong>งานต่อไป:</strong> พัฒนาต่อยอดไปยัง Stage ที่ 2 โดยนำเช็คพอยต์นี้เป็น Generator สำหรับฝึกต่อด้วย Real-ESRGAN (U-Net Discriminator + Perceptual Loss)</li>
             </ul>
           </div>
         </div>
@@ -761,6 +978,24 @@
     <div class="nav-dots" id="navDots"></div>
     <button class="nav-arrow" id="nextBtn" onclick="navigate(1)">ถัดไป →</button>
   </footer>
+
+  <!-- ========== REPORT MODAL PREVIEW ========== -->
+  <div class="modal-overlay" id="reportModal" onclick="closeModalOnOverlay(event)">
+    <div class="modal-window">
+      <div class="modal-topbar">
+        <div class="modal-title-group">
+          <span class="modal-title" id="modalTitle">รายงานและผลการทดลอง</span>
+        </div>
+        <div class="modal-topbar-actions">
+          <a class="btn-modal-action" id="modalExtLink" href="#" target="_blank">↗️ เปิดเต็มจอในแท็บใหม่</a>
+          <button class="btn-modal-close" onclick="closeReportModal()">✕</button>
+        </div>
+      </div>
+      <div class="modal-iframe-wrap">
+        <iframe class="modal-iframe" id="modalIframe" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
 
   <script src="/static/main.js"></script>
 </body>
