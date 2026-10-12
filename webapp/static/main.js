@@ -378,29 +378,88 @@ async function runCompareAll() {
     const cards = document.getElementById('msCards');
     cards.innerHTML = '';
 
-    for (const [key, r] of Object.entries(data.results)) {
-      if (!r.success) continue;
+    const resultsList = Array.isArray(data.results) ? data.results : Object.entries(data.results).map(([k, v]) => ({
+      model: MODEL_LABELS[k] || k,
+      latency_ms: v.latency_ms || 0,
+      image: v.image,
+      niqe: v.niqe || 0,
+      musiq: v.musiq || 0,
+      output_shape: v.output_shape || '-'
+    }));
+
+    const validNiqes = resultsList.map(r => r.niqe).filter(v => v > 0);
+    const minNiqe = validNiqes.length ? Math.min(...validNiqes) : 0;
+    const maxMusiq = Math.max(...resultsList.map(r => r.musiq));
+
+    resultsList.forEach(r => {
       const c = document.createElement('div');
-      c.className = 'ms-card';
+      c.className = 'ms-card' + (r.is_team ? ' highlight-team-card' : '');
       c.innerHTML = `
         <div class="ms-card-title">
-          <span>${MODEL_LABELS[key] || key}</span>
+          <span>${r.model}</span>
           <span class="td-badge td-cyan">${r.latency_ms} ms</span>
         </div>
-        <img class="ms-card-img" src="${r.image}" alt="${key}">`;
+        <img class="ms-card-img" src="${r.image}" alt="${r.model}">
+        <div style="padding: 6px 10px; font-size: 11.5px; display: flex; justify-content: space-between; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.05);">
+          <span>NIQE: <strong>${r.niqe ? r.niqe.toFixed(2) : '-'}</strong></span>
+          <span>MUSIQ: <strong>${r.musiq ? r.musiq.toFixed(1) : '-'}</strong></span>
+        </div>`;
       c.onclick = () => {
         currentOutputB64 = r.image;
         document.getElementById('afterImg').src = r.image;
-        document.getElementById('tagAfter').textContent = `4× ${MODEL_LABELS[key] || key}`;
+        document.getElementById('tagAfter').textContent = `4× ${r.model}`;
         document.getElementById('statLatency').textContent = `${r.latency_ms} ms`;
-        document.getElementById('statModel').textContent  = MODEL_LABELS[key] || key;
+        document.getElementById('statModel').textContent  = r.model;
         document.getElementById('dlBtn').disabled = false;
         setSplit(50);
         refreshLoupeSrc();
       };
       cards.appendChild(c);
+    });
+
+    let tableWrap = document.getElementById('compareSummaryTableWrap');
+    if (!tableWrap) {
+      tableWrap = document.createElement('div');
+      tableWrap.id = 'compareSummaryTableWrap';
+      tableWrap.style.marginTop = '24px';
+      tableWrap.style.overflowX = 'auto';
+      strip.appendChild(tableWrap);
     }
+
+    let rowsHtml = resultsList.map(r => `
+      <tr style="${r.is_team ? 'background: rgba(37,99,235,0.18); font-weight:600; color:#60a5fa;' : ''}">
+        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;"><strong>${r.model}</strong></td>
+        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937; ${r.niqe === minNiqe ? 'color:#10b981; font-weight:bold;' : ''}">
+          ${r.niqe ? r.niqe.toFixed(3) : '-'} ${r.niqe === minNiqe ? '★ ดีที่สุด' : ''}
+        </td>
+        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937; ${r.musiq === maxMusiq ? 'color:#10b981; font-weight:bold;' : ''}">
+          ${r.musiq ? r.musiq.toFixed(2) : '-'} ${r.musiq === maxMusiq ? '★ ดีที่สุด' : ''}
+        </td>
+        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;">${r.output_shape || '-'}</td>
+        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;">${r.latency_ms} ms</td>
+      </tr>
+    `).join('');
+
+    tableWrap.innerHTML = `
+      <div style="font-size: 15px; font-weight: 600; color: #38bdf8; margin: 18px 0 10px 0;">
+        📊 ตารางสรุปคะแนนคุณภาพของภาพสด (Live IQA Metrics Summary):
+      </div>
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1f2937;">
+        <thead>
+          <tr style="background: #1e293b; color: #94a3b8;">
+            <th style="padding: 10px 14px;">โมเดล (Model)</th>
+            <th style="padding: 10px 14px;">NIQE ↓ (ยิ่งต่ำยิ่งเป็นธรรมชาติ)</th>
+            <th style="padding: 10px 14px;">MUSIQ ↑ (คะแนนความสวยงาม)</th>
+            <th style="padding: 10px 14px;">ขนาดภาพ 4×</th>
+            <th style="padding: 10px 14px;">Latency</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    `;
+
     strip.style.display = 'block';
+    strip.scrollIntoView({ behavior: 'smooth' });
   } catch (err) {
     alert('เกิดข้อผิดพลาดในการเปรียบเทียบ: ' + err.message);
   } finally {

@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import numpy as np
 import cv2
-from PIL import Image
+import torch
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("YumYayumApp")
@@ -27,9 +27,9 @@ try:
     from torchvision.transforms import functional as torchvision_functional
     sys.modules.setdefault('torchvision.transforms.functional_tensor', torchvision_functional)
 except ImportError:
-    logger.warning("torchvision not fully initialized yet; will retry on model load.")
+    pass
 
-app = FastAPI(title="YumYayum Super-Resolution Studio", version="1.0.0")
+app = FastAPI(title="YumYayum Super-Resolution Live Benchmark Studio", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,102 +39,84 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 INPUTS_DIR = os.path.join(BASE_DIR, "inputs")
 WEIGHTS_DIR = os.path.join(BASE_DIR, "weights")
-TEAM_MODEL_PATH = os.path.join(
-    BASE_DIR,
-    "experiments",
-    "train_RealESRNetx4_CP461_team_5h",
-    "models",
-    "net_g_9000.pth"
-)
-OFFICIAL_MODEL_PATH = os.path.join(WEIGHTS_DIR, "RealESRGAN_x4plus.pth")
 
-# Global model cache
+# Checkpoint paths
+TEAM_52K_PATH = os.path.join(BASE_DIR, "net_g_52000.pth")
+OFFICIAL_REALESRGAN_PATH = os.path.join(WEIGHTS_DIR, "RealESRGAN_x4plus.pth")
+ESRGAN_PATH = os.path.join(WEIGHTS_DIR, "ESRGAN_x4.pth")
+BSRGAN_PATH = os.path.join(WEIGHTS_DIR, "BSRGAN.pth")
+REALESRNET_PATH = os.path.join(WEIGHTS_DIR, "RealESRNet_x4plus.pth")
+
+# Global caches
 MODELS: Dict[str, Any] = {}
+IQA_METRICS: Dict[str, Any] = {}
 
-def get_device_info():
-    try:
-        import torch
-        cuda_avail = torch.cuda.is_available()
-        gpu_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
-        vram_total = 0.0
-        vram_alloc = 0.0
-        if cuda_avail:
-            vram_total = round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
-            vram_alloc = round(torch.cuda.memory_allocated(0) / (1024**3), 2)
-        return {
-            "cuda_available": cuda_avail,
-            "gpu_name": gpu_name,
-            "vram_total_gb": vram_total,
-            "vram_allocated_gb": vram_alloc
-        }
-    except Exception as e:
-        return {
-            "cuda_available": False,
-            "gpu_name": "CPU (Torch not loaded)",
-            "vram_total_gb": 0.0,
-            "vram_allocated_gb": 0.0,
-            "error": str(e)
-        }
+def get_iqa_metrics():
+    global IQA_METRICS
+    if not IQA_METRICS:
+        try:
+            import pyiqa
+            logger.info("Initializing pyiqa metrics (NIQE, MUSIQ)...")
+            IQA_METRICS['niqe'] = pyiqa.create_metric('niqe', device=DEVICE)
+            IQA_METRICS['musiq'] = pyiqa.create_metric('musiq', device=DEVICE)
+        except Exception as e:
+            logger.warning(f"Could not load pyiqa: {e}")
+    return IQA_METRICS
 
-def load_sr_model(model_key: str, tile: int = 256):
-    """Lazy load Real-ESRGAN / Real-ESRNet models"""
-    cache_id = f"{model_key}_tile_{tile}"
-    if cache_id in MODELS:
-        return MODELS[cache_id]
+def convert_bsrgan_keys(state_dict):
+    new_state_dict = {}
+    for k, v in state_dict.items():
+        new_k = k.replace('RRDB_trunk.', 'body.').replace('.RDB1.', '.rdb1.').replace('.RDB2.', '.rdb2.').replace('.RDB3.', '.rdb3.').replace('trunk_conv.', 'conv_body.').replace('HRconv.', 'conv_hr.')
+        new_state_dict[new_k] = v
+    return new_state_dict
 
-    import torch
+def load_rrdb_model(model_key: str):
+    """Direct fast RRDBNet loader for all models"""
+    if model_key in MODELS:
+        return MODELS[model_key]
+
     from basicsr.archs.rrdbnet_arch import RRDBNet
-    from realesrgan import RealESRGANer
-    from basicsr.utils.download_util import load_file_from_url
+    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
+    
+    path = None
+    is_bsrgan = False
 
-    device_id = 0 if torch.cuda.is_available() else None
-    half_precision = torch.cuda.is_available()
+    if model_key == "team_52k" and os.path.exists(TEAM_52K_PATH):
+        path = TEAM_52K_PATH
+    elif model_key == "realesrgan_official" and os.path.exists(OFFICIAL_REALESRGAN_PATH):
+        path = OFFICIAL_REALESRGAN_PATH
+    elif model_key == "esrgan" and os.path.exists(ESRGAN_PATH):
+        path = ESRGAN_PATH
+    elif model_key == "bsrgan" and os.path.exists(BSRGAN_PATH):
+        path = BSRGAN_PATH
+        is_bsrgan = True
+    elif model_key == "realesrnet" and os.path.exists(REALESRNET_PATH):
+        path = REALESRNET_PATH
 
-    if model_key == "team_9000":
-        if not os.path.exists(TEAM_MODEL_PATH):
-            raise FileNotFoundError(f"Checkpoint not found at: {TEAM_MODEL_PATH}")
-        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
-        upsampler = RealESRGANer(
-            scale=4,
-            model_path=TEAM_MODEL_PATH,
-            model=model,
-            tile=tile,
-            tile_pad=10,
-            pre_pad=0,
-            half=half_precision,
-            gpu_id=device_id
-        )
-        MODELS[cache_id] = upsampler
-        return upsampler
+    if not path:
+        return None
 
-    elif model_key == "realesrgan_x4plus":
-        os.makedirs(WEIGHTS_DIR, exist_ok=True)
-        model_path = OFFICIAL_MODEL_PATH
-        if not os.path.exists(model_path):
-            logger.info("Downloading official RealESRGAN_x4plus.pth...")
-            url = 'https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth'
-            model_path = load_file_from_url(url=url, model_dir=WEIGHTS_DIR, progress=True)
-
-        model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=4)
-        upsampler = RealESRGANer(
-            scale=4,
-            model_path=model_path,
-            model=model,
-            tile=tile,
-            tile_pad=10,
-            pre_pad=0,
-            half=half_precision,
-            gpu_id=device_id
-        )
-        MODELS[cache_id] = upsampler
-        return upsampler
+    ckpt = torch.load(path, map_location=DEVICE, weights_only=False)
+    if is_bsrgan:
+        ckpt = convert_bsrgan_keys(ckpt)
+        model.load_state_dict(ckpt, strict=False)
     else:
-        raise ValueError(f"Unknown model_key: {model_key}")
+        key = 'params_ema' if 'params_ema' in ckpt else ('params' if 'params' in ckpt else None)
+        if key:
+            model.load_state_dict(ckpt[key], strict=True)
+        else:
+            model.load_state_dict(ckpt, strict=True)
+            
+    model.eval()
+    model = model.to(DEVICE)
+    MODELS[model_key] = model
+    return model
 
 def image_to_base64(img_bgr: np.ndarray, ext: str = ".jpg") -> str:
-    params = [cv2.IMWRITE_JPEG_QUALITY, 95] if ext in [".jpg", ".jpeg"] else []
+    params = [cv2.IMWRITE_JPEG_QUALITY, 88] if ext in [".jpg", ".jpeg"] else []
     success, buffer = cv2.imencode(ext, img_bgr, params)
     if not success:
         raise ValueError("Failed to encode image")
@@ -144,178 +126,127 @@ def image_to_base64(img_bgr: np.ndarray, ext: str = ".jpg") -> str:
 
 @app.get("/api/status")
 def api_status():
-    dev = get_device_info()
+    cuda_avail = torch.cuda.is_available()
+    gpu_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
     return {
         "status": "online",
-        "device": dev,
-        "team_checkpoint_exists": os.path.exists(TEAM_MODEL_PATH),
-        "team_checkpoint_size_mb": round(os.path.getsize(TEAM_MODEL_PATH)/(1024*1024), 2) if os.path.exists(TEAM_MODEL_PATH) else 0,
-        "official_weights_exist": os.path.exists(OFFICIAL_MODEL_PATH),
-        "supported_models": [
-            {"id": "team_9000", "name": "CP461 Team Real-ESRNet (9k iters)", "desc": "Trained by Team YumYayum (5-hour run checkpoint)"},
-            {"id": "realesrgan_x4plus", "name": "Real-ESRGAN x4plus (Official)", "desc": "Full official pre-trained GAN weights"},
-            {"id": "bicubic", "name": "Bicubic Interpolation 4x", "desc": "Standard mathematical baseline (No Neural Net)"}
-        ],
-        "reports": [
-            {"id": "benchmark", "name": "Benchmark Results (20 Images)", "url": "/benchmark"},
-            {"id": "eda", "name": "EDA & Data Exploration", "url": "/eda"},
-            {"id": "comparison_table", "name": "20-Image Comparison Table", "url": "/comparison-table"},
-            {"id": "gallery", "name": "Model Visual Gallery", "url": "/gallery"}
-        ]
-    }
-
-@app.get("/api/presets")
-def api_presets():
-    presets = []
-    if os.path.isdir(INPUTS_DIR):
-        valid_exts = {".jpg", ".jpeg", ".png", ".webp"}
-        for f in sorted(os.listdir(INPUTS_DIR)):
-            ext = os.path.splitext(f)[1].lower()
-            if ext in valid_exts:
-                presets.append({
-                    "filename": f,
-                    "title": f.replace("_", " ").title(),
-                    "url": f"/api/inputs/{f}"
-                })
-    return {"presets": presets}
-
-@app.get("/api/inputs/{filename}")
-def get_input_file(filename: str):
-    path = os.path.join(INPUTS_DIR, filename)
-    if not os.path.isfile(path):
-        raise HTTPException(status_code=404, detail="Preset image not found")
-    return FileResponse(path)
-
-@app.post("/api/enhance")
-async def enhance_image(
-    file: Optional[UploadFile] = File(None),
-    preset: Optional[str] = Form(None),
-    model: str = Form("team_9000"),
-    tile: int = Form(256),
-    outscale: float = Form(4.0)
-):
-    # 1. Read input image
-    img_bgr = None
-    original_name = "image"
-    if file is not None and file.filename:
-        original_name = file.filename
-        content = await file.read()
-        nparr = np.frombuffer(content, np.uint8)
-        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
-    elif preset:
-        original_name = preset
-        preset_path = os.path.join(INPUTS_DIR, preset)
-        if os.path.isfile(preset_path):
-            img_bgr = cv2.imread(preset_path, cv2.IMREAD_UNCHANGED)
-        else:
-            raise HTTPException(status_code=400, detail=f"Preset {preset} not found")
-
-    if img_bgr is None:
-        raise HTTPException(status_code=400, detail="No valid image provided")
-
-    h, w = img_bgr.shape[:2]
-    start_time = time.perf_counter()
-
-    # 2. Super-resolution processing
-    enhanced_bgr = None
-    has_alpha = len(img_bgr.shape) == 3 and img_bgr.shape[2] == 4
-
-    try:
-        if model == "bicubic":
-            new_w, new_h = int(w * outscale), int(h * outscale)
-            enhanced_bgr = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
-        else:
-            upsampler = load_sr_model(model, tile=tile)
-            enhanced_bgr, _ = upsampler.enhance(img_bgr, outscale=outscale)
-    except Exception as e:
-        logger.error(f"Inference error with model {model}: {e}", exc_info=True)
-        # Fallback to bicubic if GPU OOM or missing package
-        new_w, new_h = int(w * outscale), int(h * outscale)
-        enhanced_bgr = cv2.resize(img_bgr, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
-        return JSONResponse(status_code=500, content={
-            "error": str(e),
-            "fallback_used": True
-        })
-
-    elapsed_ms = round((time.perf_counter() - start_time) * 1000, 1)
-    out_h, out_w = enhanced_bgr.shape[:2]
-
-    # Convert to base64 Data URLs
-    ext = ".png" if has_alpha else ".jpg"
-    input_b64 = image_to_base64(img_bgr, ext=ext)
-    output_b64 = image_to_base64(enhanced_bgr, ext=ext)
-
-    return {
-        "success": True,
-        "model_used": model,
-        "input_dimensions": {"width": w, "height": h},
-        "output_dimensions": {"width": out_w, "height": out_h},
-        "scale": outscale,
-        "latency_ms": elapsed_ms,
-        "input_image": input_b64,
-        "output_image": output_b64,
-        "filename": original_name
+        "device": {"cuda_available": cuda_avail, "gpu_name": gpu_name},
+        "available_models": {
+            "Bicubic": True,
+            "ESRGAN": os.path.exists(ESRGAN_PATH),
+            "BSRGAN": os.path.exists(BSRGAN_PATH),
+            "Real-ESRNet": os.path.exists(REALESRNET_PATH),
+            "Ours (Team 52k)": os.path.exists(TEAM_52K_PATH),
+            "Real-ESRGAN (Official)": os.path.exists(OFFICIAL_REALESRGAN_PATH)
+        }
     }
 
 @app.post("/api/compare")
 async def compare_all_models(
     file: Optional[UploadFile] = File(None),
     preset: Optional[str] = Form(None),
-    tile: int = Form(256),
     outscale: float = Form(4.0)
 ):
-    """Run Bicubic, Team Real-ESRNet, and Real-ESRGAN in one request for benchmark comparison"""
+    """Run all models simultaneously and compute NIQE / MUSIQ metrics"""
     img_bgr = None
     if file is not None and file.filename:
         content = await file.read()
         nparr = np.frombuffer(content, np.uint8)
-        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_UNCHANGED)
+        img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     elif preset:
-        preset_path = os.path.join(INPUTS_DIR, preset)
-        if os.path.isfile(preset_path):
-            img_bgr = cv2.imread(preset_path, cv2.IMREAD_UNCHANGED)
+        # Check presets in datasets/eval_20/LR or inputs
+        p1 = os.path.join(BASE_DIR, "datasets", "eval_20", "LR", preset)
+        p2 = os.path.join(INPUTS_DIR, preset)
+        target_p = p1 if os.path.exists(p1) else (p2 if os.path.exists(p2) else None)
+        if target_p:
+            img_bgr = cv2.imread(target_p, cv2.IMREAD_COLOR)
 
     if img_bgr is None:
-        raise HTTPException(status_code=400, detail="No image provided")
+        raise HTTPException(status_code=400, detail="No valid image provided")
 
     h, w = img_bgr.shape[:2]
-    # Use PNG only if image has alpha channel (4 channels); otherwise JPEG
-    has_alpha = img_bgr.ndim == 3 and img_bgr.shape[2] == 4
-    ext = ".png" if has_alpha else ".jpg"
-    input_b64 = image_to_base64(img_bgr, ext=ext)
+    # Resize input if very large to prevent memory overhead during multi-model demo
+    max_side = 512
+    if max(h, w) > max_side:
+        scale_ratio = max_side / max(h, w)
+        img_bgr = cv2.resize(img_bgr, (int(w * scale_ratio), int(h * scale_ratio)), interpolation=cv2.INTER_AREA)
+        h, w = img_bgr.shape[:2]
 
-    results = {}
-    models_to_test = ["bicubic", "team_9000"]
-    if os.path.exists(OFFICIAL_MODEL_PATH):
-        models_to_test.append("realesrgan_x4plus")
+    input_b64 = image_to_base64(img_bgr, ext=".jpg")
+    iqa = get_iqa_metrics()
 
-    for m in models_to_test:
+    model_registry = [
+        ("Bicubic (Baseline)", "bicubic", None),
+        ("ESRGAN", "esrgan", ESRGAN_PATH),
+        ("BSRGAN", "bsrgan", BSRGAN_PATH),
+        ("Real-ESRNet", "realesrnet", REALESRNET_PATH),
+        ("Real-ESRGAN (โมเดลของทีม - 52k)", "team_52k", TEAM_52K_PATH),
+        ("Real-ESRGAN (Official)", "realesrgan_official", OFFICIAL_REALESRGAN_PATH)
+    ]
+
+    results = []
+
+    # Tensor preparation
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB).astype('float32') / 255.0
+    tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).unsqueeze(0).to(DEVICE)
+
+    for display_name, m_key, m_path in model_registry:
         t0 = time.perf_counter()
+        out_bgr = None
+        
         try:
-            if m == "bicubic":
-                out = cv2.resize(img_bgr, (int(w * outscale), int(h * outscale)), interpolation=cv2.INTER_CUBIC)
+            if m_key == "bicubic":
+                out_bgr = cv2.resize(img_bgr, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
             else:
-                upsampler = load_sr_model(m, tile=tile)
-                out, _ = upsampler.enhance(img_bgr, outscale=outscale)
+                if not m_path or not os.path.exists(m_path):
+                    continue
+                net = load_rrdb_model(m_key)
+                if net is None:
+                    continue
+                with torch.no_grad():
+                    sr_tensor = net(tensor)
+                    sr_np = sr_tensor.squeeze().float().cpu().clamp_(0, 1).numpy()
+                    out_bgr = (sr_np.transpose(1, 2, 0)[:, :, [2, 1, 0]] * 255.0).round().astype('uint8')
+
             t_ms = round((time.perf_counter() - t0) * 1000, 1)
-            results[m] = {
-                "success": True,
+
+            # Compute IQA metrics
+            niqe_score, musiq_score = 0.0, 0.0
+            if iqa and out_bgr is not None:
+                tmp_path = os.path.join(BASE_DIR, f"_tmp_eval_{m_key}.jpg")
+                cv2.imwrite(tmp_path, out_bgr)
+                with torch.no_grad():
+                    if 'niqe' in iqa:
+                        niqe_score = round(iqa['niqe'](tmp_path).item(), 3)
+                    if 'musiq' in iqa:
+                        musiq_score = round(iqa['musiq'](tmp_path).item(), 2)
+                if os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except Exception:
+                        pass
+
+            results.append({
+                "model": display_name,
+                "is_team": "ทีม" in display_name or "team" in display_name.lower(),
                 "latency_ms": t_ms,
-                "image": image_to_base64(out, ext=ext)
-            }
+                "output_shape": f"{w*4}x{h*4}",
+                "niqe": niqe_score,
+                "musiq": musiq_score,
+                "image": image_to_base64(out_bgr, ext=".jpg")
+            })
+
         except Exception as e:
-            results[m] = {
-                "success": False,
-                "error": str(e)
-            }
+            logger.error(f"Error evaluating {display_name}: {e}")
 
     return {
+        "success": True,
         "input_dimensions": {"width": w, "height": h},
         "input_image": input_b64,
         "results": results
     }
 
-# Serve static frontend
+# Serve static frontend & reports
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -355,7 +286,6 @@ def serve_gallery():
         return FileResponse(file_path)
     raise HTTPException(status_code=404, detail="Model comparison gallery not found")
 
-
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("webapp.app:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("webapp.app:app", host="0.0.0.0", port=8000, reload=False)
