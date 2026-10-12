@@ -27,7 +27,8 @@ if str(APP_DIR) not in sys.path:
 
 from rrdbnet import RRDBNet  # noqa: E402
 
-torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
+# Limit CPU threads to prevent CPU quota throttling on Streamlit Cloud
+torch.set_num_threads(max(1, min(2, os.cpu_count() or 1)))
 
 st.set_page_config(
     page_title="YumYayum Super-Resolution Studio",
@@ -311,9 +312,9 @@ def render_studio() -> None:
         selected_models = st.multiselect(
             "Models to compare",
             options=model_names,
-            default=default_models,
+            default=default_models[:1] if len(default_models) > 1 else default_models,
         )
-        max_side = st.slider("Maximum input side", min_value=128, max_value=512, value=256, step=64)
+        max_side = st.slider("Maximum input side (Cloud CPU Optimized)", min_value=96, max_value=320, value=160, step=32)
         include_iqa = st.checkbox(
             "Calculate NIQE and MUSIQ",
             value=False,
