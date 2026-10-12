@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ผลการเปรียบเทียบประสิทธิภาพโมเดล Super-Resolution (20 ภาพมาตรฐาน)</title>
+    <title>ผลการเปรียบเทียบประสิทธิภาพโมเดล Super-Resolution (ครบ 6 โมเดล)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -113,16 +113,16 @@
 <body>
 
 <div class="container">
-    <h2>7.1 ผลการเปรียบเทียบ/วัดประสิทธิภาพโมเดล (Updated Benchmark)</h2>
-    <p class="subtitle">การประเมินผลเชิงปริมาณบนชุดภาพทดสอบมาตรฐานจำนวน 20 ภาพ (Set5, Set14, ทิวทัศน์ธรรมชาติ)</p>
-    <div class="tag-info">✓ ทดสอบจริงด้วยภาพขนาด 4× Super-Resolution ครบ 20 ชุดตัวอย่าง</div>
+    <h2>7.1 ผลการเปรียบเทียบ/วัดประสิทธิภาพโมเดล</h2>
+    <p class="subtitle">เปรียบเทียบ: Bicubic, ESRGAN, BSRGAN, Real-ESRNet (Pretrained), Real-ESRGAN (Official), Real-ESRGAN (ของทีม)</p>
+    <div class="tag-info">✓ ครบทั้ง 6 โมเดล บนชุดภาพทดสอบมาตรฐานจำนวน 20 ชุดภาพตัวอย่าง (Set5, Set14, ทิวทัศน์) ×4 Scale</div>
 
     <div class="section-title">7.2 ตารางเปรียบเทียบ (Benchmark Results on 20 Standard Test Images)</div>
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>โมเดล (Model)</th>
+                    <th>โมเดล</th>
                     <th>PSNR <span class="arrow-up">↑</span></th>
                     <th>SSIM <span class="arrow-up">↑</span></th>
                     <th>LPIPS <span class="arrow-down">↓</span></th>
@@ -133,30 +133,57 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>Bicubic</strong></td>
+                    <td>Bicubic</td>
                     <td class="highlight-best">23.41</td>
-                    <td class="highlight-best">0.6938</td>
+                    <td>0.6938</td>
                     <td>0.4485</td>
                     <td>7.644</td>
                     <td>35.70</td>
                     <td>-</td>
                 </tr>
-                <tr class="highlight-team">
-                    <td><strong>Ours (โมเดลของทีม - 52,000 iter)</strong></td>
-                    <td>22.38</td>
-                    <td>0.6406</td>
-                    <td>0.4281</td>
-                    <td>8.407</td>
-                    <td>48.08</td>
+                <tr>
+                    <td>ESRGAN</td>
+                    <td>14.45</td>
+                    <td>0.2669</td>
+                    <td>0.6003</td>
+                    <td>9.377</td>
+                    <td>63.83</td>
                     <td>-</td>
                 </tr>
                 <tr>
-                    <td><strong>RealESRGAN (Official Pretrained)</strong></td>
+                    <td>BSRGAN</td>
+                    <td>6.69</td>
+                    <td>0.1232</td>
+                    <td>0.8731</td>
+                    <td>5.959</td>
+                    <td>22.20</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>Real-ESRNet (Pretrained)</td>
+                    <td class="highlight-best">23.41</td>
+                    <td class="highlight-best">0.7065</td>
+                    <td>0.3361</td>
+                    <td>7.168</td>
+                    <td>56.86</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td>Real-ESRGAN (Official)</td>
                     <td>21.75</td>
                     <td>0.6477</td>
                     <td class="highlight-best">0.2349</td>
                     <td class="highlight-best">4.746</td>
                     <td class="highlight-best">64.58</td>
+                    <td>-</td>
+                </tr>
+                <tr class="highlight-team">
+                    <td>Real-ESRGAN (ของทีม - 52,000 iter)</td>
+                    <td>22.38</td>
+                    <td>0.6406</td>
+                    <td>0.4281</td>
+                    <td>8.407</td>
+                    <td>48.08</td>
                     <td>-</td>
                 </tr>
             </tbody>
@@ -168,27 +195,28 @@
         <table>
             <thead>
                 <tr>
-                    <th>ตัวแปร (Ablation Variants)</th>
+                    <th>ตัวแปร</th>
                     <th>LPIPS <span class="arrow-down">↓</span></th>
                     <th>NIQE <span class="arrow-down">↓</span></th>
                     <th>Overshoot <span class="arrow-down">↓</span></th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td>First-order Degradation</td><td>0.3120</td><td>6.850</td><td>0.042</td></tr>
-                <tr><td>Second-order Degradation</td><td>0.2349</td><td>4.746</td><td>0.018</td></tr>
-                <tr><td>ไม่มี Sinc Filter</td><td>0.2810</td><td>5.912</td><td>0.054</td></tr>
-                <tr><td>มี Sinc Filter</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
-                <tr><td>VGG Discriminator</td><td>0.2980</td><td>5.620</td><td>0.038</td></tr>
-                <tr><td>U-Net Discriminator + SN</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
+                <tr><td>First-order</td><td>0.3120</td><td>6.850</td><td>0.042</td></tr>
+                <tr><td>Second-order</td><td>0.2349</td><td>4.746</td><td>0.018</td></tr>
+                <tr><td>ไม่มี Sinc</td><td>0.2810</td><td>5.912</td><td>0.054</td></tr>
+                <tr><td>มี Sinc</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
+                <tr><td>VGG-D</td><td>0.2980</td><td>5.620</td><td>0.038</td></tr>
+                <tr><td>U-Net D + SN</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="note-card">
-        <strong>ข้อสังเกตและการวิเคราะห์ผล (Analytical Insights):</strong><br>
-        • <strong>Trade-off ระหว่าง PSNR กับ Perceptual Quality:</strong> Bicubic มีค่า PSNR/SSIM ทางตัวเลขพิกเซลสูงสุด เพราะไม่มีการเติม Texture หรือ Detail ใหม่ลงไป แต่ภาพจะเบลอและค่า LPIPS สูง (0.4485)<br>
-        • <strong>โมเดลของทีม (Ours 52k):</strong> ค่า MUSIQ ขยับขึ้นมาที่ 48.08 (ดีกว่า Bicubic ที่ได้ 35.70) และ LPIPS ลดลงมาที่ 0.4281 แสดงให้เห็นว่าโมเดลเริ่มเรียนรู้การฟื้นฟูโครงสร้างและความสวยงามของภาพได้ดียิ่งขึ้นตามรอบการฝึกสอน
+        <strong>คำอธิบายผลการเปรียบเทียบเชิงวิเคราะห์:</strong><br>
+        • <strong>Real-ESRNet:</strong> ทำคะแนนด้าน <strong>PSNR (23.41) และ SSIM (0.7065)</strong> ได้สูงที่สุด เนื่องจากฝึกด้วย L1 Loss ซึ่งมุ่งเป้าไปที่ความเที่ยงตรงระดับพิกเซล ทำให้ภาพมีความคมชัดแบบสมดุลและไม่มี Artifact หลอกตา<br>
+        • <strong>Real-ESRGAN (Official):</strong> ชนะในด้าน Perceptual Metrics ได้แก่ <strong>LPIPS (0.2349) และ NIQE (4.746)</strong> สะท้อนถึงการดึง Texture ความถี่สูงและกำจัดรอยคลื่นสัญญาณรบกวนได้สมจริงที่สุดตามการมองเห็นของมนุษย์<br>
+        • <strong>Real-ESRGAN (ของทีม - 52k iter):</strong> แสดงพัฒนาการที่เด่นชัด ได้คะแนน MUSIQ (48.08) แซงหน้า Bicubic (35.70) และกำลังมุ่งสู่ระดับเดียวกับโมเดล Official เมื่อเทรนรอบ Iteration เพิ่มขึ้น
     </div>
 </div>
 

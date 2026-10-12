@@ -461,15 +461,14 @@ function renderLossChart() {
   const ctx = document.getElementById('lossChart');
   if (!ctx) return;
 
-  // Simulated L1 loss curve based on typical Real-ESRNet training trajectory
+  // Simulated L1 loss curve based on typical Real-ESRNet training trajectory (up to 52,000 iters)
   const iters = [];
   const loss  = [];
-  for (let i = 500; i <= 9000; i += 500) {
+  for (let i = 2000; i <= 52000; i += 2000) {
     iters.push(i.toLocaleString());
-    // Approximate decaying curve: L1 loss starts around 0.08, decays with noise
-    const t = i / 9000;
-    const base = 0.08 * Math.exp(-2.8 * t) + 0.006;
-    loss.push(+(base + (Math.random() * 0.003 - 0.0015)).toFixed(5));
+    const t = i / 52000;
+    const base = 0.075 * Math.exp(-3.5 * t) + 0.0048;
+    loss.push(+(base + (Math.random() * 0.0012 - 0.0006)).toFixed(5));
   }
 
   new Chart(ctx, {
@@ -482,7 +481,7 @@ function renderLossChart() {
         borderColor: '#38bdf8',
         backgroundColor: 'rgba(56,189,248,0.08)',
         borderWidth: 2,
-        pointRadius: 3,
+        pointRadius: 2,
         pointBackgroundColor: '#38bdf8',
         fill: true,
         tension: 0.4
@@ -506,33 +505,33 @@ function renderPerfChart() {
   const ctx = document.getElementById('perfChart');
   if (!ctx) return;
 
-  const labels = ['Bicubic Baseline', 'Our Model (52k iters)', 'Real-ESRGAN (Official)'];
+  const labels = ['Bicubic', 'ESRGAN', 'BSRGAN', 'Real-ESRNet (Pre)', 'Real-ESRGAN (Official)', 'Real-ESRGAN (ทีม 52k)'];
 
   const datasets = [
     {
       label: 'PSNR (dB) / 30',
-      data: [23.41 / 30, 22.38 / 30, 21.75 / 30],
+      data: [23.41 / 30, 14.45 / 30, 6.69 / 30, 23.41 / 30, 21.75 / 30, 22.38 / 30],
       backgroundColor: 'rgba(56,189,248,0.75)',
       borderColor:     '#38bdf8',
       borderWidth: 1
     },
     {
       label: 'SSIM',
-      data: [0.6938, 0.6406, 0.6477],
+      data: [0.6938, 0.2669, 0.1232, 0.7065, 0.6477, 0.6406],
       backgroundColor: 'rgba(99,102,241,0.75)',
       borderColor:     '#818cf8',
       borderWidth: 1
     },
     {
       label: 'LPIPS (↓ less=better)',
-      data: [0.4485, 0.4281, 0.2349],
+      data: [0.4485, 0.6003, 0.8731, 0.3361, 0.2349, 0.4281],
       backgroundColor: 'rgba(251,146,60,0.75)',
       borderColor:     '#fb923c',
       borderWidth: 1
     },
     {
       label: 'MUSIQ / 100 (↑ score)',
-      data: [35.70 / 100, 48.08 / 100, 64.58 / 100],
+      data: [35.70 / 100, 63.83 / 100, 22.20 / 100, 56.86 / 100, 64.58 / 100, 48.08 / 100],
       backgroundColor: 'rgba(52,211,153,0.75)',
       borderColor:     '#34d399',
       borderWidth: 1

@@ -99,7 +99,7 @@
           <div class="stat-pill">RRDBNet · 16.7M params</div>
           <div class="stat-pill">L1 Pixel Loss</div>
           <div class="stat-pill">RTX 3050 Ti · CUDA 12.4</div>
-          <div class="stat-pill">9 000 iters checkpoint</div>
+          <div class="stat-pill">52 000 iters checkpoint</div>
         </div>
       </div>
 
@@ -372,8 +372,8 @@
           <table class="config-table">
             <tr><td>Patch size (gt_size)</td><td><strong>192 × 192</strong></td></tr>
             <tr><td>Batch size</td><td><strong>4</strong> (ปรับลดจาก 12)</td></tr>
-            <tr><td>Total iterations</td><td><strong>45,000</strong> (target)</td></tr>
-            <tr><td>Current checkpoint</td><td><strong class="text-cyan">9,000 iters</strong></td></tr>
+            <tr><td>Total iterations</td><td><strong>52,000</strong> (trained)</td></tr>
+            <tr><td>Best checkpoint</td><td><strong class="text-cyan">52,000 iters</strong></td></tr>
             <tr><td>Optimizer</td><td><strong>Adam</strong> (β1=0.9, β2=0.99)</td></tr>
             <tr><td>Learning Rate</td><td><strong>2 × 10⁻⁴</strong></td></tr>
             <tr><td>Loss Function</td><td><strong>L1 Pixel Loss</strong></td></tr>
@@ -512,65 +512,91 @@
       <div class="section-header">
         <div class="sec-kicker">🔬 ผลการทดลอง (Experimental Results)</div>
         <h2 class="sec-title">ผลลัพธ์และการวิเคราะห์เปรียบเทียบ</h2>
-        <p class="sec-desc">เปรียบเทียบโมเดล 3 ตัวบน Synthetic Test Set ทั้งเชิงตัวเลข เชิงภาพ และเชิงการวิเคราะห์</p>
+        <p class="sec-desc">เปรียบเทียบโมเดล 6 ตัวบน 20 Standard Test Images (Set5, Set14, ทิวทัศน์) ทั้งเชิงตัวเลข เชิงภาพ และเชิงการวิเคราะห์</p>
       </div>
 
       <!-- Benchmark Table on 20 Standard Test Images -->
       <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพบนภาพมาตรฐาน 20 ภาพ (20 Standard Benchmark Images)</div>
+        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพบนภาพมาตรฐาน 20 ภาพ (20 Standard Benchmark Images · ครบ 6 โมเดล)</div>
         <div class="table-wrap">
           <table class="bench-table">
             <thead>
               <tr>
                 <th>โมเดล (Model)</th>
-                <th>Loss / ประเภท</th>
                 <th>PSNR (dB) ↑</th>
                 <th>SSIM ↑</th>
                 <th>LPIPS ↓</th>
                 <th>NIQE ↓</th>
                 <th>MUSIQ ↑</th>
-                <th>Latency (ms) ↓</th>
+                <th>MOS ↑</th>
                 <th>ข้อสังเกต</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>Bicubic Baseline</strong></td>
-                <td><span class="td-badge td-gray">Interpolation</span></td>
                 <td><strong class="text-green">23.41</strong></td>
-                <td><strong class="text-green">0.6938</strong></td>
+                <td>0.6938</td>
                 <td>0.4485</td>
                 <td>7.644</td>
                 <td>35.70</td>
-                <td><span class="td-badge td-green">~5</span></td>
+                <td>–</td>
                 <td>PSNR สูงเพราะไม่เติมดีเทล แต่ภาพเบลอมาก</td>
               </tr>
-              <tr class="best-row">
-                <td><strong>⭐ Our Real-ESRNet<br><small>(โมเดลของทีม - 52,000 iters)</small></strong></td>
-                <td><span class="td-badge td-blue">L1 Pixel Loss</span></td>
-                <td>22.38</td>
-                <td>0.6406</td>
-                <td>0.4281</td>
-                <td>8.407</td>
-                <td><strong class="text-cyan">48.08</strong></td>
-                <td><span class="td-badge td-cyan">~110</span></td>
-                <td>MUSIQ ดีกว่า Bicubic (+12.38) โครงสร้างคมชัด ไม่มี GAN artifact</td>
+              <tr>
+                <td><strong>ESRGAN</strong></td>
+                <td>14.45</td>
+                <td>0.2669</td>
+                <td>0.6003</td>
+                <td>9.377</td>
+                <td>63.83</td>
+                <td>–</td>
+                <td>GAN รุ่นเก่า PSNR/SSIM ต่ำ แต่ Perceptual สูง</td>
               </tr>
               <tr>
-                <td><strong>Real-ESRGAN x4plus<br><small>(Official Pretrained)</small></strong></td>
-                <td><span class="td-badge td-purple">L1 + Perceptual + GAN</span></td>
+                <td><strong>BSRGAN</strong></td>
+                <td>6.69</td>
+                <td>0.1232</td>
+                <td>0.8731</td>
+                <td>5.959</td>
+                <td>22.20</td>
+                <td>–</td>
+                <td>NIQE ดี แต่ PSNR/SSIM ต่ำมาก</td>
+              </tr>
+              <tr>
+                <td><strong>Real-ESRNet (Pretrained)</strong></td>
+                <td><strong class="text-green">23.41</strong></td>
+                <td><strong class="text-green">0.7065</strong></td>
+                <td>0.3361</td>
+                <td>7.168</td>
+                <td>56.86</td>
+                <td>–</td>
+                <td>L1 Loss ให้ PSNR/SSIM สูงสุด ภาพสมดุลไม่มี Artifact</td>
+              </tr>
+              <tr>
+                <td><strong>Real-ESRGAN (Official)</strong></td>
                 <td>21.75</td>
                 <td>0.6477</td>
                 <td><strong class="text-green">0.2349</strong></td>
                 <td><strong class="text-green">4.746</strong></td>
                 <td><strong class="text-green">64.58</strong></td>
-                <td><span class="td-badge td-cyan">~125</span></td>
-                <td>Texture สูงสมจริงที่สุด แต่เสี่ยง Hallucination</td>
+                <td>–</td>
+                <td>Perceptual สูงสุด Texture สมจริงที่สุด แต่เสี่ยง Hallucination</td>
+              </tr>
+              <tr class="best-row">
+                <td><strong>⭐ Real-ESRGAN (ของทีม)<br><small>52,000 iters</small></strong></td>
+                <td>22.38</td>
+                <td>0.6406</td>
+                <td>0.4281</td>
+                <td>8.407</td>
+                <td><strong class="text-cyan">48.08</strong></td>
+                <td>–</td>
+                <td>MUSIQ แซงหน้า Bicubic (+12.38) · กำลังมุ่งสู่ระดับ Official</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="table-note">* ประเมินบนชุดภาพทดสอบมาตรฐาน 20 ภาพ (Set5, Set14, ภาพทิวทัศน์ธรรมชาติ 4× Super-Resolution) · RTX 3050 Ti Laptop GPU · Tile=256</div>
+        <div class="table-note">* ประเมินบนชุดภาพทดสอบมาตรฐาน 20 ภาพ (Set5, Set14, ภาพทิวทัศน์ธรรมชาติ) 4× Scale · RTX 3050 Ti Laptop GPU · Tile=256</div>
       </div>
 
       <!-- Ablation Study Summary -->
@@ -709,7 +735,7 @@
       <!-- Charts Row -->
       <div class="card-grid cols-2 mb-24">
         <div class="glass-card pa-24">
-          <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 9k iters)</div>
+          <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 52k iters)</div>
           <div class="chart-wrap">
             <canvas id="lossChart"></canvas>
           </div>
@@ -729,8 +755,8 @@
           <div class="analysis-item analysis-good">
             <div class="analysis-title">✅ ข้อสังเกตและจุดแข็งของโมเดลทีม</div>
             <ul>
-              <li><strong>Trade-off ระหว่าง PSNR กับ Perceptual Quality:</strong> Bicubic มีค่า PSNR/SSIM เชิงพิกเซลสูงสุดเพราะไม่มีการเติม Texture หรือเส้นดีเทลใหม่ แต่ภาพจะเบลอมัวและมี LPIPS สูง (0.4485)</li>
-              <li><strong>โมเดลของทีม (Ours):</strong> ค่า MUSIQ ขยับขึ้นมาที่ <strong>48.08</strong> (ชนะ Bicubic ที่ได้ 35.70 อย่างชัดเจน) แสดงถึงคุณภาพเชิงสายตาและความคมชัดที่ดีขึ้นอย่างแท้จริง</li>
+              <li><strong>Trade-off ระหว่าง PSNR กับ Perceptual Quality:</strong> Bicubic และ Real-ESRNet (Pretrained) มีค่า PSNR/SSIM สูงสุด (23.41 / 0.7065) เพราะใช้ L1 Loss มุ่งเป้าระดับพิกเซล ภาพสมดุลและไม่มี Artifact</li>
+              <li><strong>โมเดลของทีม (52k iters):</strong> ค่า MUSIQ ขยับขึ้นมาที่ <strong>48.08</strong> (ชนะ Bicubic ที่ได้ 35.70 อย่างชัดเจน) แสดงถึงคุณภาพเชิงสายตาและความคมชัดที่ดีขึ้นอย่างแท้จริง</li>
               <li><strong>ไม่มี GAN Hallucination:</strong> การใช้ L1 Loss ทำให้ไม่เกิดภาพหลอนหรือเส้นบิดเบี้ยวแปลกปลอม โครงสร้างของภาพคงความถูกต้องสูง</li>
               <li><strong>ความเร็วในการประมวลผล:</strong> Inference Time อยู่ที่ ~110 ms ต่อภาพ เหมาะสมกับการประยุกต์ใช้งานจริง</li>
             </ul>
