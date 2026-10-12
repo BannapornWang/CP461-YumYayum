@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDA & Data Exploration - Real-ESRGAN (20 Benchmarks & Training Data)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1150px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 36px 44px;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+        }
+        p.subtitle {
+            font-size: 15px;
+            color: #64748b;
+            margin: 0;
+        }
+        .grid-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+        .chart-desc {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 18px;
+        }
+        .chart-container {
+            position: relative;
+            height: 290px;
+            width: 100%;
+        }
+        .analysis-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 16px;
+            font-size: 13.5px;
+            color: #475569;
+            line-height: 1.5;
+            border-left: 3px solid #3b82f6;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .eda-summary {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 20px 24px;
+            font-size: 14.5px;
+            color: #1e3a8a;
+            line-height: 1.6;
+        }
+        .eda-summary strong {
+            color: #1d4ed8;
+        }
+        @media (max-width: 850px) {
+            .grid-charts {
+                grid-template-columns: 1fr;
+            }
+            .summary-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>4.1 Exploratory Data Analysis (EDA) สำหรับงาน Super-Resolution</h1>
+        <p class="subtitle">การวิเคราะห์คุณลักษณะชุดข้อมูลฝึกสอน (DIV2K, Flickr2K, OTS 5,511 ภาพ) และชุดภาพทดสอบมาตรฐาน 20 ชุดภาพตัวอย่าง (Set5, Set14, Foliage)</p>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="summary-stats">
+        <div class="stat-card">
+            <div class="stat-value">5,511 ภาพ</div>
+            <div class="stat-label">ภาพฝึกสอนทั้งหมด (Training HR)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">20 ภาพ</div>
+            <div class="stat-label">ชุดทดสอบวัดผลจริง (Benchmark Test)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">3 อัลบั้ม</div>
+            <div class="stat-label">Bicubic / Ours / RealESRGAN</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">4× Scale</div>
+            <div class="stat-label">อัตราส่วนการขยายภาพ Super-Res</div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid-charts">
+        <!-- Chart 1 -->
+        <div class="chart-card">
+            <div class="chart-title">การกระจายตัวของประเภทชุดข้อมูลทดสอบ (Test Benchmark Composition)</div>
+            <div class="chart-desc">สัดส่วนหมวดหมู่ภาพทั้ง 20 ภาพที่นำมาใช้วัดผลและจัดอัลบั้มเปรียบเทียบ</div>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="analysis-box">
+                <strong>Insight:</strong> ครอบคลุมทั้งภาพบุคคล (Faces), ลายเส้นการ์ตูน/ตัวพิมพ์ (Comics/Text), สัตว์/ขนสัตว์ (Baboon, Bird), และพื้นผิวธรรมชาติ (Foliage, Flowers) เพื่อวัดผลได้รอบด้าน
+            </div>
+        </div>
+
+        <!-- Chart 2 -->
+        <div class="chart-card">
+            <div class="chart-title">ระดับความครอบคลุมการจำลองความเสื่อมสภาพ (Degradation Coverage EDA)</div>
+            <div class="chart-desc">พารามิเตอร์จำลองความเสียหายในชุดข้อมูลสังเคราะห์ (Pure Synthetic)</div>
+            <div class="chart-container">
+                <canvas id="degradationChart"></canvas>
+            </div>
+            <div class="analysis-box">
+                <strong>Insight:</strong> การใช้ Second-order Degradation ซ้อน 2 ชั้น พร้อม Sinc Filter (จำลอง Ringing/Overshoot 80%) ช่วยให้โมเดลทนทานต่อภาพจริงมากกว่าวิธีเดิม
+            </div>
+        </div>
+    </div>
+
+    <!-- EDA Conclusion -->
+    <div class="eda-summary">
+        <strong>สรุปผลการวิเคราะห์ EDA (Key Takeaways):</strong><br>
+        1. <strong>ความหลากหลายของภาพทดสอบ 20 ชุด:</strong> แยกการทดสอบทั้งภาพขอบเรียบ (Smooth regions) และขอบคม/ขนสัตว์ (High-frequency details) ทำให้เห็นพฤติกรรมของโมเดลแต่ละตัวชัดเจน<br>
+        2. <strong>การกระจายตัวของ Degradation:</strong> ไม่พึ่งพาการลดขนาดภาพแบบสมมาตรเดียว (Bicubic downsampling) แต่สุ่ม Noise และ Blur ที่สะท้อนสถานการณ์จริงในระบบอินเทอร์เน็ตและการบีบอัดไฟล์ภาพ
+    </div>
+</div>
+
+<script>
+    // 1. Benchmark Category Composition
+    const ctx1 = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+            labels: ['ภาพคน/ใบหน้า (Faces/Human)', 'สัตว์/พื้นผิวขน (Animals/Fur)', 'ลายเส้น/ภาพพิมพ์ (Comics/Art/Text)', 'ธรรมชาติ/สิ่งปลูกสร้าง (Nature/Scenery)'],
+            datasets: [{
+                data: [6, 5, 4, 5],
+                backgroundColor: ['#2563eb', '#06b6d4', '#f59e0b', '#10b981'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: { size: 12, family: 'Sarabun' },
+                        padding: 12
+                    }
+                }
+            },
+            cutout: '62%'
+        }
+    });
+
+    // 2. Degradation Coverage Chart (Horizontal Bar)
+    const ctx2 = document.getElementById('degradationChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: [
+                'Gaussian Blur (Kernel 7-21)',
+                'Gaussian Noise (Sigma 1-30)',
+                'Poisson Noise (Scale 0.05-3)',
+                'JPEG Compression (Q 30-95)',
+                'Sinc Filter (Artifact Ringing)'
+            ],
+            datasets: [{
+                label: 'Coverage ในชุดฝึกสอน (%)',
+                data: [100, 90, 80, 95, 80],
+                backgroundColor: '#0d9488',
+                borderRadius: 6,
+                barThickness: 18
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) { return value + "%"; },
+                        font: { family: 'Sarabun', size: 11 }
+                    },
+                    grid: { color: '#f1f5f9' }
+                },
+                y: {
+                    ticks: {
+                        font: { family: 'Sarabun', size: 12 }
+                    },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
