@@ -196,10 +196,24 @@
 </div>
 
 <script>
+    // Plugin to enforce solid background so copied/saved canvas is not transparent
+    const solidBgPlugin = {
+        id: 'customCanvasBackgroundColor',
+        beforeDraw: (chart, args, options) => {
+            const {ctx} = chart;
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-over';
+            ctx.fillStyle = options.color || '#ffffff';
+            ctx.fillRect(0, 0, chart.width, chart.height);
+            ctx.restore();
+        }
+    };
+
     // 1. Benchmark Category Composition
     const ctx1 = document.getElementById('categoryChart').getContext('2d');
     new Chart(ctx1, {
         type: 'doughnut',
+        plugins: [solidBgPlugin],
         data: {
             labels: ['ภาพคน/ใบหน้า (Faces/Human)', 'สัตว์/พื้นผิวขน (Animals/Fur)', 'ลายเส้น/ภาพพิมพ์ (Comics/Art/Text)', 'ธรรมชาติ/สิ่งปลูกสร้าง (Nature/Scenery)'],
             datasets: [{
@@ -213,6 +227,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+                customCanvasBackgroundColor: { color: '#ffffff' },
                 legend: {
                     position: 'bottom',
                     labels: {
@@ -230,6 +245,7 @@
     const ctx2 = document.getElementById('degradationChart').getContext('2d');
     new Chart(ctx2, {
         type: 'bar',
+        plugins: [solidBgPlugin],
         data: {
             labels: [
                 'Gaussian Blur (Kernel 7-21)',
@@ -251,6 +267,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
+                customCanvasBackgroundColor: { color: '#ffffff' },
                 legend: { display: false }
             },
             scales: {

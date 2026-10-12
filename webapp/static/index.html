@@ -732,19 +732,32 @@
         </div>
       </div>
 
-      <!-- Charts Row -->
+      <!-- Charts Row (Solid Non-Transparent Images for Easy Presentation Copying) -->
       <div class="card-grid cols-2 mb-24">
-        <div class="glass-card pa-24">
-          <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 52k iters)</div>
-          <div class="chart-wrap">
-            <canvas id="lossChart"></canvas>
+        <div class="glass-card pa-24 chart-img-card">
+          <div class="chart-header-row">
+            <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 52k iters)</div>
+            <a href="/static/images/loss_curve_52k.png" download="RealESRNet_Loss_Curve_52k.png" class="btn-chart-dl" title="บันทึกรูปภาพพื้นหลังทึบสำหรับนำเสนอ">
+              💾 บันทึกรูป HD
+            </a>
           </div>
+          <div class="chart-img-wrap">
+            <img src="/static/images/loss_curve_52k.png" alt="Training Loss Curve @ 52k iters" class="chart-img" loading="lazy" />
+          </div>
+          <div class="chart-copy-hint">💡 สามารถคลิกขวาแล้วกด "Copy Image" ไปวางในสไลด์นำเสนอได้ทันที (พื้นหลังทึบ คมชัดทุกรายละเอียด)</div>
         </div>
-        <div class="glass-card pa-24">
-          <div class="card-kicker">📊 กราฟเปรียบเทียบตัวชี้วัด (Benchmark Comparison)</div>
-          <div class="chart-wrap">
-            <canvas id="perfChart"></canvas>
+
+        <div class="glass-card pa-24 chart-img-card">
+          <div class="chart-header-row">
+            <div class="card-kicker">📊 กราฟเปรียบเทียบตัวชี้วัด (Benchmark Comparison)</div>
+            <a href="/static/images/benchmark_comparison.png" download="Benchmark_Comparison_20_Images.png" class="btn-chart-dl" title="บันทึกรูปภาพพื้นหลังทึบสำหรับนำเสนอ">
+              💾 บันทึกรูป HD
+            </a>
           </div>
+          <div class="chart-img-wrap">
+            <img src="/static/images/benchmark_comparison.png" alt="Benchmark Comparison (6 Models)" class="chart-img" loading="lazy" />
+          </div>
+          <div class="chart-copy-hint">💡 สามารถคลิกขวาแล้วกด "Copy Image" ไปวางในสไลด์นำเสนอได้ทันที (พื้นหลังทึบ คมชัดทุกรายละเอียด)</div>
         </div>
       </div>
 
