@@ -72,7 +72,7 @@ def get_version():
     return locals()['__version__']
 
 
-def get_requirements(filename='requirements.txt'):
+def get_requirements(filename='requirements-package.txt'):
     here = os.path.dirname(os.path.realpath(__file__))
     with open(os.path.join(here, filename), 'r') as f:
         requires = [line.replace('\n', '') for line in f.readlines()]
