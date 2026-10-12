@@ -97,7 +97,7 @@ path:
   pretrain_network_g: ~  # or path to pretrained weights if resuming
   param_key_g: params_ema
   strict_load_g: true
-  resume_state: experiments/train_RealESRNetx4_CP461_team_5h/training_states/54000.state  # Set to checkpoint path to resume training
+  resume_state: experiments/train_RealESRNetx4_CP461_team_5h/training_states/52000.state  # Set to checkpoint path to resume training
   experiments_root: experiments  # Directory for saving checkpoints/logs
 
 # training settings
@@ -142,7 +142,7 @@ val:
 # logging settings
 logger:
   print_freq: 100  # Print loss every 100 iterations
-  save_checkpoint_freq: !!float 2e3  # Save checkpoint every 2,000 iterations
+  save_checkpoint_freq: !!float 1e4  # Save checkpoint every 10,000 iterations
   use_tb_logger: true  # Enable TensorBoard logging
   wandb:  # Weights & Biases logging (optional)
     project: ~  # Set to project name to enable wandb
