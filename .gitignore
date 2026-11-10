@@ -17,6 +17,11 @@ data/
 
 version.py
 
+# Weights & checkpoints & clones
+*.pth
+*.state
+Real-ESRGAN-repo/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

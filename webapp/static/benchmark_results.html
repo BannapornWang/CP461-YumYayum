@@ -173,17 +173,17 @@
                     <td>21.75</td>
                     <td>0.6477</td>
                     <td class="highlight-best">0.2349</td>
-                    <td class="highlight-best">4.746</td>
-                    <td class="highlight-best">64.58</td>
+                    <td>4.746</td>
+                    <td>64.58</td>
                     <td>-</td>
                 </tr>
                 <tr class="highlight-team">
-                    <td>Real-ESRGAN (ของทีม - 52,000 iter)</td>
-                    <td>22.38</td>
-                    <td>0.6406</td>
-                    <td>0.4281</td>
-                    <td>8.407</td>
-                    <td>48.08</td>
+                    <td>⭐ Real-ESRGAN (Our Team Model - net_g_latest)</td>
+                    <td>20.69</td>
+                    <td>0.5261</td>
+                    <td>0.3124</td>
+                    <td class="highlight-best">3.864</td>
+                    <td class="highlight-best">65.49</td>
                     <td>-</td>
                 </tr>
             </tbody>
@@ -195,28 +195,39 @@
         <table>
             <thead>
                 <tr>
-                    <th>ตัวแปร</th>
+                    <th>ตัวแปร / สถาปัตยกรรม</th>
                     <th>LPIPS <span class="arrow-down">↓</span></th>
                     <th>NIQE <span class="arrow-down">↓</span></th>
                     <th>Overshoot <span class="arrow-down">↓</span></th>
+                    <th>คำอธิบายและการวิเคราะห์</th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td>First-order</td><td>0.3120</td><td>6.850</td><td>0.042</td></tr>
-                <tr><td>Second-order</td><td>0.2349</td><td>4.746</td><td>0.018</td></tr>
-                <tr><td>ไม่มี Sinc</td><td>0.2810</td><td>5.912</td><td>0.054</td></tr>
-                <tr><td>มี Sinc</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
-                <tr><td>VGG-D</td><td>0.2980</td><td>5.620</td><td>0.038</td></tr>
-                <tr><td>U-Net D + SN</td><td>0.2349</td><td>4.746</td><td>0.015</td></tr>
+                <tr><td>First-order Degradation</td><td>0.3120</td><td>6.850</td><td>0.042</td><td>การสังเคราะห์แบบขั้นตอนเดียว ไม่ครอบคลุมความเสื่อมสภาพในโลกจริง</td></tr>
+                <tr><td>Second-order Degradation</td><td>0.2349</td><td>4.746</td><td>0.018</td><td>จำลองการเบลอและบีบอัดซ้ำสองชั้น กู้คืนภาพจริงได้เหนือกว่ามาก</td></tr>
+                <tr><td>ไม่มี Sinc Filter</td><td>0.2810</td><td>5.912</td><td>0.054</td><td>เกิดเส้นวงคลื่น (Ringing & Overshoot) รบกวนอย่างเห็นได้ชัด</td></tr>
+                <tr><td>มี Sinc Filter</td><td>0.2349</td><td>4.746</td><td>0.015</td><td>ตัดความถี่ส่วนเกิน ขจัดรอยคลื่นหลอกตาได้อย่างมีประสิทธิภาพ</td></tr>
+                <tr><td><strong>VGG Discriminator (VGG-D)</strong></td><td>0.2980</td><td>5.620</td><td>0.038</td><td>ตัดสินเฉพาะ Global Output ทำให้ Texture หลอนและมี Noise เกิดขึ้น</td></tr>
+                <tr class="highlight-team"><td><strong>U-Net Discriminator + SN</strong></td><td class="highlight-best">0.2349</td><td class="highlight-best">4.746</td><td class="highlight-best">0.015</td><td>ผสาน Skip Connections ตรวจจับพิกเซลเฉพาะจุด + ควบคุม Gradient ให้เสถียร</td></tr>
             </tbody>
         </table>
+    </div>
+
+    <!-- Deep-dive Box in Benchmark Report -->
+    <div style="margin: 20px 0; background: #1e293b; border-left: 4px solid #38bdf8; border-radius: 6px; padding: 16px 20px;">
+        <h4 style="margin: 0 0 10px 0; color: #38bdf8; font-size: 16px;">💡 คำอธิบายเชิงสถาปัตยกรรม: ทำไม U-Net Discriminator + Spectral Normalization (SN) จึงดีกว่า VGG-D?</h4>
+        <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+            • <strong>VGG Discriminator:</strong> ใช้โครงสร้างแบบ Feed-forward ดั้งเดิมที่รับอินพุตแล้วดาวน์สเกลลงจนเหลือตัวเลขความจริง/ปลอมเพียง 1 ตัว ทำให้ประเมินภาพเฉพาะ "มุมมองภาพรวม (Global image distribution)" แต่ไม่สามารถวิเคราะห์และส่ง Gradient Feedback ให้กับพื้นผิวแบบละเอียด (Local Textures) ได้ ส่งผลให้โมเดลสร้างภาพที่มี Artifacts และเส้นลายแตก (LPIPS 0.2980, Overshoot 0.038)<br>
+            • <strong>U-Net Discriminator:</strong> มีสถาปัตยกรรมแบบ Encoder-Decoder พร้อม <em>Skip Connections</em> ข้ามชั้น ทำให้สามารถประเมินผลและให้ Loss Feedback ลงลึกระดับพิกเซล (Pixel-level Local Feedback) ได้ทั่วทั้งภาพ พร้อมกับมองโครงสร้างภาพรวมควบคู่กัน<br>
+            • <strong>Spectral Normalization (SN):</strong> เป็นเทคนิคคณิตศาสตร์ที่จำกัด Lipschitz Constant ของเมทริกซ์น้ำหนักในแต่ละเลเยอร์ ช่วยป้องกันภาวะ Discriminator โอเวอร์ฟิตและระเบิดของ Gradient (Exploding Gradients) ทำให้การฝึกโมเดล GAN มีเสถียรภาพสูง และสามารถผลิตภาพที่คมชัดเป็นธรรมชาติสูงสุด (Overshoot ลดฮวบเหลือเพียง 0.015)
+        </p>
     </div>
 
     <div class="note-card">
         <strong>คำอธิบายผลการเปรียบเทียบเชิงวิเคราะห์:</strong><br>
         • <strong>Real-ESRNet:</strong> ทำคะแนนด้าน <strong>PSNR (23.41) และ SSIM (0.7065)</strong> ได้สูงที่สุด เนื่องจากฝึกด้วย L1 Loss ซึ่งมุ่งเป้าไปที่ความเที่ยงตรงระดับพิกเซล ทำให้ภาพมีความคมชัดแบบสมดุลและไม่มี Artifact หลอกตา<br>
-        • <strong>Real-ESRGAN (Official):</strong> ชนะในด้าน Perceptual Metrics ได้แก่ <strong>LPIPS (0.2349) และ NIQE (4.746)</strong> สะท้อนถึงการดึง Texture ความถี่สูงและกำจัดรอยคลื่นสัญญาณรบกวนได้สมจริงที่สุดตามการมองเห็นของมนุษย์<br>
-        • <strong>Real-ESRGAN (ของทีม - 52k iter):</strong> แสดงพัฒนาการที่เด่นชัด ได้คะแนน MUSIQ (48.08) แซงหน้า Bicubic (35.70) และกำลังมุ่งสู่ระดับเดียวกับโมเดล Official เมื่อเทรนรอบ Iteration เพิ่มขึ้น
+        • <strong>Real-ESRGAN (Official):</strong> ชนะในด้าน LPIPS (0.2349) สะท้อนถึงการดึง Texture ความถี่สูงตามสถาปัตยกรรมของผู้วิจัยเดิม<br>
+        • <strong>Real-ESRGAN (Our Team Model - net_g_latest):</strong> ทำคะแนนด้านคุณภาพภาพเชิงธรรมชาติและความสวยงามทางสายตาได้โดดเด่นที่สุด ได้ <strong>NIQE 3.864 และ MUSIQ 65.49</strong> แซงหน้าทั้ง Bicubic และ Official อย่างเด็ดขาด
     </div>
 </div>
 
