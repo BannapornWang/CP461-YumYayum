@@ -224,8 +224,6 @@ async def compare_all_models(
                         niqe_score = round(iqa['niqe'](tmp_path).item(), 3)
                     if 'musiq' in iqa:
                         musiq_score = round(iqa['musiq'](tmp_path).item(), 2)
-                        if m_key == "team_latest" and (musiq_score > 35.0 or musiq_score < 30.0):
-                            musiq_score = round(33.2 + (musiq_score % 1.5), 2)
                 if os.path.exists(tmp_path):
                     try:
                         os.remove(tmp_path)

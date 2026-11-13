@@ -387,13 +387,6 @@ async function runCompareAll() {
       output_shape: v.output_shape || '-'
     }));
 
-    resultsList.forEach(r => {
-      const isTeam = r.is_team || (r.model && (r.model.includes('Team') || r.model.includes('ทีม') || r.model.includes('latest')));
-      if (isTeam && (r.musiq > 35.0 || r.musiq < 30.0)) {
-        r.musiq = 33.4;
-      }
-    });
-
     const validNiqes = resultsList.map(r => r.niqe).filter(v => v > 0);
     const minNiqe = validNiqes.length ? Math.min(...validNiqes) : 0;
     const maxMusiq = Math.max(...resultsList.map(r => r.musiq));
