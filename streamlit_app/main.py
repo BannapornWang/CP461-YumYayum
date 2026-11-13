@@ -32,7 +32,9 @@ torch.set_num_threads(max(1, min(2, os.cpu_count() or 1)))
 
 st.set_page_config(
     page_title="YumYayum Super-Resolution Studio",
+    page_icon="⚡",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 MODEL_SPECS: dict[str, dict[str, Any]] = {
@@ -71,10 +73,10 @@ MODEL_SPECS: dict[str, dict[str, Any]] = {
 }
 
 REPORTS = {
-    "Benchmark report": "benchmark_results.html",
-    "EDA dashboard": "eda_dashboard.html",
-    "Comparison table": "model_comparison_20_table.html",
-    "Model gallery": "model_comparison_gallery.html",
+    "📊 ผลการทดลองและการวิเคราะห์ (Academic Benchmark)": "benchmark_results.html",
+    "📈 ภาพรวมและสถิติชุดข้อมูล (EDA Dashboard)": "eda_dashboard.html",
+    "📋 ตารางเปรียบเทียบมาตรฐาน 20 ภาพ": "model_comparison_20_table.html",
+    "🖼️ แกลเลอรีผลลัพธ์โมเดล (Model Gallery)": "model_comparison_gallery.html",
 }
 
 
@@ -287,7 +289,7 @@ def render_report(report_name: str) -> None:
         return
     import streamlit.components.v1 as components
 
-    height = 1150 if report_name in {"EDA dashboard", "Model gallery"} else 900
+    height = 2200 if "Academic Benchmark" in report_name else (1400 if "EDA" in report_name or "Gallery" in report_name else 1000)
     components.html(report_path.read_text(encoding="utf-8"), height=height, scrolling=True)
 
 
@@ -407,13 +409,40 @@ def render_studio() -> None:
 
 
 def main() -> None:
+    # Custom CSS for dark sidebar and clean look
+    st.markdown(
+        """
+        <style>
+            .stApp {
+                background-color: #0b0f19;
+                color: #e2e8f0;
+            }
+            [data-testid="stSidebar"] {
+                background-color: #0f172a;
+                border-right: 1px solid #1e293b;
+            }
+            h1, h2, h3, h4, h5, h6 {
+                color: #f8fafc !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     with st.sidebar:
-        st.title("YumYayum")
-        page = st.radio("Workspace", ["Live comparison", *REPORTS.keys()])
-    if page == "Live comparison":
+        st.title("⚡ YumYayum Studio")
+        st.markdown("**Super-Resolution Academic Project**")
+        page_options = [
+            "📊 ผลการทดลองและการวิเคราะห์ (Academic Benchmark)",
+            "⚡ ทดสอบขยายภาพสด (Live Model Comparison)",
+            "📈 ภาพรวมและสถิติชุดข้อมูล (EDA Dashboard)",
+            "📋 ตารางเปรียบเทียบมาตรฐาน 20 ภาพ",
+            "🖼️ แกลเลอรีผลลัพธ์โมเดล (Model Gallery)",
+        ]
+        page = st.radio("เลือกหน้าแสดงผล:", page_options, index=0)
+    
+    if page == "⚡ ทดสอบขยายภาพสด (Live Model Comparison)":
         render_studio()
     else:
-        st.title(page)
         render_report(page)
 
 
