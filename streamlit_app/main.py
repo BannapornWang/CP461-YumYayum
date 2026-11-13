@@ -57,9 +57,11 @@ MODEL_SPECS: dict[str, dict[str, Any]] = {
         "url": None,
         "bsrgan": True,
     },
-    "⭐ Real-ESRGAN (Our Team Model - net_g_latest)": {
+    "⭐ Real-ESRGAN (Our Team Model - Improved)": {
         "key": "team",
         "local": (
+            ROOT_DIR / "weights" / "RealESRGAN_OurTeam_Improved.pth",
+            ROOT_DIR / "RealESRGAN_OurTeam_Improved.pth",
             ROOT_DIR / "net_g_latest.pth",
             ROOT_DIR / "net_g_52000.pth",
             ROOT_DIR / "experiments" / "train_RealESRNetx4_CP461_team_5h" / "models" / "net_g_9000.pth",

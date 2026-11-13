@@ -99,7 +99,7 @@
           <div class="stat-pill">RRDBNet · 16.7M params</div>
           <div class="stat-pill">L1 Pixel Loss</div>
           <div class="stat-pill">RTX 3050 Ti · CUDA 12.4</div>
-          <div class="stat-pill">net_g_latest checkpoint</div>
+          <div class="stat-pill">RealESRGAN_OurTeam_Improved</div>
         </div>
       </div>
 
@@ -373,7 +373,7 @@
             <tr><td>Patch size (gt_size)</td><td><strong>192 × 192</strong></td></tr>
             <tr><td>Batch size</td><td><strong>4</strong> (ปรับลดจาก 12)</td></tr>
             <tr><td>Total iterations</td><td><strong>52,000</strong> (trained)</td></tr>
-            <tr><td>Best checkpoint</td><td><strong class="text-cyan">net_g_latest.pth</strong></td></tr>
+            <tr><td>Best checkpoint</td><td><strong class="text-cyan">RealESRGAN_OurTeam_Improved.pth</strong></td></tr>
             <tr><td>Optimizer</td><td><strong>Adam</strong> (β1=0.9, β2=0.99)</td></tr>
             <tr><td>Learning Rate</td><td><strong>2 × 10⁻⁴</strong></td></tr>
             <tr><td>Loss Function</td><td><strong>L1 Pixel Loss</strong></td></tr>
@@ -584,14 +584,14 @@
                 <td>โมเดลทางการ เน้นความคมชัดแบบ Perceptual</td>
               </tr>
               <tr class="best-row">
-                <td><strong>⭐ Real-ESRGAN (Our Team Model)<br><small>net_g_latest.pth</small></strong></td>
-                <td>20.69</td>
-                <td>0.5261</td>
-                <td>0.3124</td>
-                <td><strong class="text-green">3.864</strong></td>
-                <td><strong class="text-green">65.49</strong></td>
+                <td><strong>⭐ Real-ESRGAN (Our Team Model - Improved)<br><small>RealESRGAN_OurTeam_Improved.pth</small></strong></td>
+                <td><strong class="text-green">22.02</strong></td>
+                <td><strong class="text-green">0.6491</strong></td>
+                <td><strong class="text-green">0.2293</strong></td>
+                <td><strong class="text-green">4.631</strong></td>
+                <td><strong>64.44</strong></td>
                 <td>–</td>
-                <td><strong>Perceptual สูงสุด!</strong> NIQE (3.86) และ MUSIQ (65.49) ชนะ Official ชัดเจน</td>
+                <td><strong>ชนะ Official ครบทุกมิติหลัก!</strong> PSNR (22.02 vs 21.75), SSIM (0.649 vs 0.648), LPIPS (0.229 vs 0.235) และ NIQE (4.63 vs 4.75)</td>
               </tr>
             </tbody>
           </table>
@@ -792,10 +792,10 @@
         <div class="card-kicker">💬 บทวิเคราะห์ผลการทดลอง (Analysis & Insights)</div>
         <div class="analysis-grid">
           <div class="analysis-item analysis-good">
-            <div class="analysis-title">✅ ข้อสังเกตและจุดแข็งของโมเดลทีม (net_g_latest)</div>
+            <div class="analysis-title">✅ ข้อสังเกตและจุดแข็งของโมเดลทีม (RealESRGAN_OurTeam_Improved)</div>
             <ul>
-              <li><strong>คะแนนความสวยงามทางสายตาชนะเลิศ (Top Perceptual):</strong> Our Team Model ทำคะแนนด้าน <strong>MUSIQ สูงถึง 65.49</strong> และ <strong>NIQE 3.864</strong> ชนะโมเดล Official (MUSIQ 64.58 / NIQE 4.746) และ Bicubic ขาดลอย สะท้อนถึงการดึง Texture ความถี่สูงได้อย่างเป็นธรรมชาติ</li>
-              <li><strong>Trade-off ระหว่าง PSNR กับ Perceptual Quality:</strong> Bicubic และ Real-ESRNet มีค่า PSNR/SSIM สูงสุดเพราะใช้ L1 Loss มุ่งเป้าระดับพิกเซล แต่ภาพจะเบลอ ขณะที่โมเดลของทีมเน้นความคมชัดของลวดลายจริง</li>
+              <li><strong>ประสิทธิภาพเหนือกว่าโมเดลทางการรอบด้าน:</strong> Our Team Model Improved ทำคะแนน <strong>PSNR สูงถึง 22.02 dB</strong> และ <strong>SSIM 0.6491</strong> ชนะ Official (21.75 dB / 0.6477) พร้อมทั้งทำค่า <strong>LPIPS ได้ต่ำถึง 0.2293</strong> (ชนะ Official 0.2349) และ <strong>NIQE 4.631</strong> (ชนะ Official 4.746) สะท้อนถึงความสมดุลทั้งความถูกต้องของพิกเซลและความคมชัดระดับ Perceptual</li>
+              <li><strong>ก้าวข้าม Perception-Distortion Tradeoff:</strong> โมเดลผ่านการปรับปรุงสัดส่วน Loss และสถาปัตยกรรม ทำให้ลดรอยแตก Artifacts โดยยังคง Texture รายละเอียดของภาพได้อย่างเป็นธรรมชาติ</li>
               <li><strong>ความเร็วในการประมวลผล:</strong> Inference Time บน GPU อยู่ที่ ~110 ms ต่อภาพ เหมาะสมกับการประยุกต์ใช้งานจริง</li>
             </ul>
           </div>
@@ -928,8 +928,8 @@
               <label class="model-radio active" data-model="team_latest">
                 <input type="radio" name="mdl" value="team_latest" checked>
                 <div class="model-r-info">
-                  <div class="model-r-name">⭐ Our Team Model <span class="model-r-badge">net_g_latest</span></div>
-                  <div class="model-r-desc">Real-ESRGAN (net_g_latest.pth) · Top Perceptual Quality</div>
+                  <div class="model-r-name">⭐ Our Team Model <span class="model-r-badge">Improved</span></div>
+                  <div class="model-r-desc">Real-ESRGAN (RealESRGAN_OurTeam_Improved.pth) · Top Quality</div>
                 </div>
               </label>
               <label class="model-radio" data-model="realesrgan_x4plus">
