@@ -324,8 +324,9 @@ def render_studio() -> None:
             help="Optional. Add -r requirements-iqa.txt to streamlit_app/requirements.txt to enable these metrics.",
         )
 
-    if local_checkpoint(MODEL_SPECS["Ours (Team checkpoint)"]) is None and uploaded_checkpoint is None:
-        st.info("A team checkpoint is not in the deployed files. Upload the 52k .pth checkpoint in the sidebar to include it.")
+    team_spec = MODEL_SPECS.get("⭐ Real-ESRGAN (Our Team Model - Improved)") or next((v for v in MODEL_SPECS.values() if v.get("key") == "team"), None)
+    if team_spec and local_checkpoint(team_spec) is None and uploaded_checkpoint is None:
+        st.info("A team checkpoint is not in the deployed files. Upload the improved .pth checkpoint in the sidebar to include it.")
     if not image_upload:
         st.info("Choose an image in the sidebar to start a comparison.")
         return
