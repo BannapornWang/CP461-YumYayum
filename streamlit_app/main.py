@@ -57,9 +57,11 @@ MODEL_SPECS: dict[str, dict[str, Any]] = {
         "url": None,
         "bsrgan": True,
     },
-    "⭐ Real-ESRGAN (Our Team Model - net_g_latest)": {
+    "⭐ Real-ESRGAN (Our Team Model - Improved)": {
         "key": "team",
         "local": (
+            ROOT_DIR / "weights" / "RealESRGAN_OurTeam_Improved.pth",
+            ROOT_DIR / "RealESRGAN_OurTeam_Improved.pth",
             ROOT_DIR / "net_g_latest.pth",
             ROOT_DIR / "net_g_52000.pth",
             ROOT_DIR / "experiments" / "train_RealESRNetx4_CP461_team_5h" / "models" / "net_g_9000.pth",
@@ -266,8 +268,6 @@ def run_comparison(
                     with torch.inference_mode():
                         niqe_score = round(float(metrics["niqe"](metric_input).item()), 3)
                         musiq_score = round(float(metrics["musiq"](metric_input).item()), 2)
-                        if ("team" in name.lower() or "ours" in name.lower() or "latest" in name.lower()) and (musiq_score > 35.0 or musiq_score < 30.0):
-                            musiq_score = round(33.2 + (musiq_score % 1.5), 2)
                     result["niqe"] = niqe_score
                     result["musiq"] = musiq_score
                 except Exception as error:

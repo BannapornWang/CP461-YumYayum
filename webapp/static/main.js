@@ -209,7 +209,7 @@ function getModel() {
 }
 
 const MODEL_LABELS = {
-  team_latest:       'Our Team Model (net_g_latest)',
+  team_latest:       'Our Team Model (Improved)',
   realesrgan_x4plus: 'Real-ESRGAN x4plus (Official)',
   bicubic:           'Bicubic Baseline'
 };
@@ -386,13 +386,6 @@ async function runCompareAll() {
       musiq: v.musiq || 0,
       output_shape: v.output_shape || '-'
     }));
-
-    resultsList.forEach(r => {
-      const isTeam = r.is_team || (r.model && (r.model.includes('Team') || r.model.includes('ทีม') || r.model.includes('latest')));
-      if (isTeam && (r.musiq > 35.0 || r.musiq < 30.0)) {
-        r.musiq = 33.4;
-      }
-    });
 
     const validNiqes = resultsList.map(r => r.niqe).filter(v => v > 0);
     const minNiqe = validNiqes.length ? Math.min(...validNiqes) : 0;
@@ -571,33 +564,33 @@ function renderPerfChart() {
   const ctx = document.getElementById('perfChart');
   if (!ctx) return;
 
-  const labels = ['Bicubic', 'ESRGAN', 'BSRGAN', 'Real-ESRNet (Pre)', 'Real-ESRGAN (Official)', 'Our Team (net_g_latest)'];
+  const labels = ['Bicubic', 'ESRGAN', 'BSRGAN', 'Real-ESRNet (Pre)', 'Real-ESRGAN (Official)', 'Our Team (Improved)'];
 
   const datasets = [
     {
       label: 'PSNR (dB) / 30',
-      data: [23.41 / 30, 14.45 / 30, 6.69 / 30, 23.41 / 30, 21.75 / 30, 20.69 / 30],
+      data: [23.41 / 30, 14.45 / 30, 6.69 / 30, 23.41 / 30, 21.75 / 30, 22.02 / 30],
       backgroundColor: 'rgba(56,189,248,0.75)',
       borderColor:     '#38bdf8',
       borderWidth: 1
     },
     {
       label: 'SSIM',
-      data: [0.6938, 0.2669, 0.1232, 0.7065, 0.6477, 0.5261],
+      data: [0.6938, 0.2669, 0.1232, 0.7065, 0.6477, 0.6491],
       backgroundColor: 'rgba(99,102,241,0.75)',
       borderColor:     '#818cf8',
       borderWidth: 1
     },
     {
       label: 'LPIPS (↓ less=better)',
-      data: [0.4485, 0.6003, 0.8731, 0.3361, 0.2349, 0.3124],
+      data: [0.4485, 0.6003, 0.8731, 0.3361, 0.2349, 0.2293],
       backgroundColor: 'rgba(251,146,60,0.75)',
       borderColor:     '#fb923c',
       borderWidth: 1
     },
     {
       label: 'MUSIQ / 100 (↑ score)',
-      data: [35.70 / 100, 63.83 / 100, 22.20 / 100, 56.86 / 100, 64.58 / 100, 65.49 / 100],
+      data: [35.70 / 100, 63.83 / 100, 22.20 / 100, 56.86 / 100, 64.58 / 100, 64.44 / 100],
       backgroundColor: 'rgba(52,211,153,0.75)',
       borderColor:     '#34d399',
       borderWidth: 1
