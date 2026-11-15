@@ -282,10 +282,25 @@ def run_comparison(
     return results, failures
 
 
+def list_sample_images() -> list[Path]:
+    """Discover preset sample images shipped with the repository."""
+    candidates: list[Path] = []
+    for folder in (ROOT_DIR / "datasets" / "eval_20" / "LR", ROOT_DIR / "inputs"):
+        if folder.is_dir():
+            files = [
+                path for path in sorted(folder.iterdir())
+                if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}
+            ]
+            if files:
+                candidates.extend(files[:8])
+                break
+    return candidates
+
+
 def render_report(report_name: str) -> None:
     report_path = STATIC_DIR / REPORTS[report_name]
     if not report_path.is_file():
-        st.error(f"Report file is missing: {report_path.name}")
+        st.error(f"ไม่พบไฟล์รายงาน: {report_path.name}")
         return
     import streamlit.components.v1 as components
 
@@ -294,79 +309,118 @@ def render_report(report_name: str) -> None:
 
 
 def render_studio() -> None:
-    st.title("YumYayum Super-Resolution Studio")
-    st.write("Upload an image and compare x4 super-resolution results side by side.")
+    st.title("⚡ YumYayum Super-Resolution Studio")
+    st.write("เปรียบเทียบการขยายภาพความละเอียดสูง 4× จากโมเดลของทีมและโมเดลมาตรฐานแบบเคียงข้างกัน")
     device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
-    st.caption(f"Inference device: **{device_name}**")
+    st.caption(f"อุปกรณ์ประมวลผล (Inference device): **{device_name}**")
+
+    sample_files = list_sample_images()
 
     with st.sidebar:
-        st.subheader("Input and models")
-        image_upload = st.file_uploader(
-            "Input image",
-            type=["png", "jpg", "jpeg", "webp"],
-            help="Images are resized before inference to limit memory use.",
-        )
-        checkpoint_upload = st.file_uploader(
-            "Optional team checkpoint (.pth)",
-            type=["pth", "pt"],
-            help="The 52k checkpoint is not tracked by Git. Upload it here for deployment comparisons.",
-        )
+        st.subheader("1. เลือกภาพทดสอบ")
+        input_modes = ["🖼️ เลือกภาพตัวอย่างที่มีให้", "📤 อัปโหลดภาพของคุณเอง"] if sample_files else ["📤 อัปโหลดภาพของคุณเอง"]
+        input_mode = st.radio("แหล่งที่มาของภาพ:", input_modes, index=0)
+
+        image_bytes: bytes | None = None
+        image_label = "input"
+        if input_mode == "🖼️ เลือกภาพตัวอย่างที่มีให้" and sample_files:
+            sample_map = {path.name: path for path in sample_files}
+            selected_sample = st.selectbox("เลือกภาพตัวอย่างจากโปรเจกต์:", list(sample_map.keys()))
+            sample_path = sample_map[selected_sample]
+            image_bytes = sample_path.read_bytes()
+            image_label = sample_path.name
+        else:
+            image_upload = st.file_uploader(
+                "อัปโหลดภาพ (PNG, JPG, WEBP)",
+                type=["png", "jpg", "jpeg", "webp"],
+                help="ภาพขนาดใหญ่จะถูกปรับขนาดชั่วคราวก่อนขยาย เพื่อป้องกันหน่วยความจำเต็ม",
+            )
+            if image_upload is not None:
+                image_bytes = image_upload.getvalue()
+                image_label = image_upload.name
+
+        st.subheader("2. เลือกโมเดลเปรียบเทียบ")
+        with st.expander("⚙️ ตั้งค่าขั้นสูง (Advanced Settings)", expanded=False):
+            max_side = st.slider(
+                "ขนาดด้านที่ยาวสุดของภาพเข้า (px)",
+                min_value=96,
+                max_value=320,
+                value=160,
+                step=32,
+                help="ค่าแนะนำสำหรับ Cloud CPU คือ 160 px เพื่อให้รันเสร็จเร็ว",
+            )
+            checkpoint_upload = st.file_uploader(
+                "อัปโหลด Checkpoint (.pth) เพิ่มเติม",
+                type=["pth", "pt"],
+                help="ใช้เมื่อต้องการทดสอบไฟล์โมเดลอื่นนอกเหนือจากที่มีในโปรเจกต์",
+            )
+            include_iqa = st.checkbox(
+                "คำนวณคะแนน NIQE และ MUSIQ",
+                value=False,
+                help="ตัวเลือกเสริม (ต้องติดตั้งแพ็กเกจใน requirements-iqa.txt)",
+            )
+
         uploaded_checkpoint = save_uploaded_checkpoint(checkpoint_upload) if checkpoint_upload else None
         model_names = available_model_names(uploaded_checkpoint)
-        default_models = [name for name in ("Bicubic (Baseline)", "Real-ESRGAN (Official)") if name in model_names]
+        preferred_defaults = [
+            name for name in (
+                "Bicubic (Baseline)",
+                "⭐ Real-ESRGAN (Our Team Model - Improved)",
+                "Real-ESRGAN (Official)",
+            )
+            if name in model_names
+        ]
+        default_models = preferred_defaults[:2] if len(preferred_defaults) >= 2 else preferred_defaults
         selected_models = st.multiselect(
-            "Models to compare",
+            "โมเดลที่ต้องการเทียบ:",
             options=model_names,
-            default=default_models[:1] if len(default_models) > 1 else default_models,
-        )
-        max_side = st.slider("Maximum input side (Cloud CPU Optimized)", min_value=96, max_value=320, value=160, step=32)
-        include_iqa = st.checkbox(
-            "Calculate NIQE and MUSIQ",
-            value=False,
-            help="Optional. Add -r requirements-iqa.txt to streamlit_app/requirements.txt to enable these metrics.",
+            default=default_models,
         )
 
     team_spec = MODEL_SPECS.get("⭐ Real-ESRGAN (Our Team Model - Improved)") or next((v for v in MODEL_SPECS.values() if v.get("key") == "team"), None)
     if team_spec and local_checkpoint(team_spec) is None and uploaded_checkpoint is None:
-        st.info("A team checkpoint is not in the deployed files. Upload the improved .pth checkpoint in the sidebar to include it.")
-    if not image_upload:
-        st.info("Choose an image in the sidebar to start a comparison.")
+        st.info("ไม่พบไฟล์น้ำหนักโมเดลของทีมในโฟลเดอร์ สามารถอัปโหลดไฟล์ .pth ได้ในเมนู '⚙️ ตั้งค่าขั้นสูง' ทางซ้าย")
+    if image_bytes is None:
+        st.info("กรุณาเลือกภาพตัวอย่าง หรืออัปโหลดภาพจากแถบด้านซ้ายเพื่อเริ่มต้น")
         return
     if not selected_models:
-        st.warning("Select at least one model.")
+        st.warning("กรุณาเลือกโมเดลอย่างน้อย 1 โมเดล")
         return
 
     try:
-        image_rgb = np.asarray(Image.open(io.BytesIO(image_upload.getvalue())).convert("RGB"))
+        image_rgb = np.asarray(Image.open(io.BytesIO(image_bytes)).convert("RGB"))
         image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
         image_bgr = resize_input(image_bgr, max_side)
     except Exception as error:
-        st.error(f"Could not read this image: {error}")
+        st.error(f"ไม่สามารถอ่านไฟล์ภาพนี้ได้: {error}")
         return
 
     source_col, settings_col = st.columns([2, 1])
     with source_col:
         st.image(
             cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB),
-            caption=f"Input - {image_bgr.shape[1]} x {image_bgr.shape[0]}",
+            caption=f"ภาพต้นฉบับ ({image_label}) — {image_bgr.shape[1]} × {image_bgr.shape[0]} px",
             use_container_width=True,
         )
     with settings_col:
-        st.metric("Output scale", "4x")
-        st.metric("Selected models", len(selected_models))
-        st.caption("Official model files download on first use. Team and BSRGAN checkpoints must be present in the repo or uploaded.")
+        st.metric("อัตราขยายภาพ (Scale)", "4×")
+        st.metric("จำนวนโมเดลที่เลือก", f"{len(selected_models)} โมเดล")
+        st.caption(
+            "กดปุ่มด้านล่างเพื่อขยายภาพและเทียบผลลัพธ์ทีละโมเดลแบบเคียงข้างกับภาพต้นฉบับ "
+            "(โมเดล Official จะดาวน์โหลดอัตโนมัติในการใช้งานครั้งแรก)"
+        )
 
-    if st.button("Run comparison", type="primary", use_container_width=True):
-        with st.spinner("Running selected models. CPU inference can take a few minutes per model..."):
+    if st.button("🚀 เริ่มขยายภาพและเปรียบเทียบ (Run Comparison)", type="primary", use_container_width=True):
+        with st.spinner("กำลังประมวลผลโมเดลที่เลือก... (หากรันบน CPU อาจใช้เวลาสักครู่ต่อโมเดล)"):
             results, failures = run_comparison(image_bgr, selected_models, uploaded_checkpoint, include_iqa)
         st.session_state["comparison_results"] = results
         st.session_state["comparison_failures"] = failures
         st.session_state["comparison_signature"] = comparison_signature(
-            image_upload.getvalue(), selected_models, max_side, include_iqa, uploaded_checkpoint
+            image_bytes, selected_models, max_side, include_iqa, uploaded_checkpoint
         )
 
     current_signature = comparison_signature(
-        image_upload.getvalue(), selected_models, max_side, include_iqa, uploaded_checkpoint
+        image_bytes, selected_models, max_side, include_iqa, uploaded_checkpoint
     )
     is_current = st.session_state.get("comparison_signature") == current_signature
     results = st.session_state.get("comparison_results", []) if is_current else []
@@ -376,31 +430,41 @@ def render_studio() -> None:
     if not results:
         return
 
-    st.subheader("Comparison results")
+    st.subheader("📊 ผลการเปรียบเทียบ (Comparison Results)")
     st.dataframe(
         [
             {
-                "Model": item["model"],
-                "Latency (ms)": item["latency_ms"],
-                "Output dimensions": f'{item["width"]} x {item["height"]}',
-                **({"NIQE": item["niqe"], "MUSIQ": item["musiq"]} if "niqe" in item else {}),
+                "โมเดล (Model)": item["model"],
+                "เวลาประมวลผล (ms)": item["latency_ms"],
+                "ขนาดภาพ 4×": f'{item["width"]} × {item["height"]}',
+                **({"NIQE ↓": item["niqe"], "MUSIQ ↑": item["musiq"]} if "niqe" in item else {}),
             }
             for item in results
         ],
         hide_index=True,
         use_container_width=True,
     )
+
     tabs = st.tabs([item["model"] for item in results])
+    input_rgb_preview = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     for tab, item in zip(tabs, results):
         with tab:
-            st.image(
-                cv2.cvtColor(item["image"], cv2.COLOR_BGR2RGB),
-                caption=f'{item["width"]} x {item["height"]} - {item["latency_ms"]} ms',
-                use_container_width=True,
-            )
+            col_before, col_after = st.columns(2)
+            with col_before:
+                st.image(
+                    input_rgb_preview,
+                    caption=f"ภาพต้นฉบับ (Input) — {image_bgr.shape[1]} × {image_bgr.shape[0]} px",
+                    use_container_width=True,
+                )
+            with col_after:
+                st.image(
+                    cv2.cvtColor(item["image"], cv2.COLOR_BGR2RGB),
+                    caption=f'{item["model"]} (4×) — {item["width"]} × {item["height"]} px · {item["latency_ms"]} ms',
+                    use_container_width=True,
+                )
             download_name = item["model"].lower().replace(" ", "_").replace("(", "").replace(")", "")
             st.download_button(
-                "Download PNG",
+                "💾 ดาวน์โหลดภาพ PNG",
                 data=image_png_bytes(item["image"]),
                 file_name=f"{download_name}_x4.png",
                 mime="image/png",
@@ -409,13 +473,17 @@ def render_studio() -> None:
 
 
 def main() -> None:
-    # Custom CSS for dark sidebar and clean look
+    # Custom CSS for clean dark theme & Thai readability
     st.markdown(
         """
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+            html, body, [class*="css"] {
+                font-family: 'IBM Plex Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+            }
             .stApp {
                 background-color: #0b0f19;
-                color: #e2e8f0;
+                color: #f1f5f9;
             }
             [data-testid="stSidebar"] {
                 background-color: #0f172a;
@@ -430,7 +498,7 @@ def main() -> None:
     )
     with st.sidebar:
         st.title("⚡ YumYayum Studio")
-        st.markdown("**Super-Resolution Academic Project**")
+        st.caption("CP461 Computer Vision · Real-ESRGAN Super-Resolution (4×)")
         page_options = [
             "📊 ผลการทดลองและการวิเคราะห์ (Academic Benchmark)",
             "⚡ ทดสอบขยายภาพสด (Live Model Comparison)",

@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YumYayum | CP461 Super-Resolution Presentation</title>
-  <meta name="description" content="Real-World Super-Resolution with Real-ESRNet (4x) — CP461 Computer Vision Project Presentation, SWU">
+  <meta name="description" content="Real-World Super-Resolution with Real-ESRNet & Real-ESRGAN (4x) — CP461 Computer Vision Project Presentation, SWU">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style.css?v=2.1">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
 </head>
 <body>
@@ -24,23 +24,23 @@
       <div class="brand-logo">✨</div>
       <div>
         <div class="brand-title">YumYayum <span class="badge-inline">CP461</span></div>
-        <div class="brand-subtitle">Real-ESRNet Super-Resolution · SWU</div>
+        <div class="brand-subtitle">Real-World Super-Resolution (4×) · SWU</div>
       </div>
     </div>
 
     <nav class="nav-tabs" id="mainNavTabs">
-      <button class="tab-btn active" onclick="goToSection(0)" data-idx="0">🏠 Overview</button>
-      <button class="tab-btn" onclick="goToSection(1)" data-idx="1">🗂️ Dataset</button>
-      <button class="tab-btn" onclick="goToSection(2)" data-idx="2">⚙️ Method</button>
-      <button class="tab-btn" onclick="goToSection(3)" data-idx="3">📊 Metrics</button>
-      <button class="tab-btn" onclick="goToSection(4)" data-idx="4">🔬 Results</button>
-      <button class="tab-btn" onclick="goToSection(5)" data-idx="5">⚡ Live Demo</button>
+      <button class="tab-btn active" onclick="goToSection(0)" data-idx="0">1. ภาพรวม (Overview)</button>
+      <button class="tab-btn" onclick="goToSection(1)" data-idx="1">2. ชุดข้อมูล (Dataset)</button>
+      <button class="tab-btn" onclick="goToSection(2)" data-idx="2">3. วิธีการ (Method)</button>
+      <button class="tab-btn" onclick="goToSection(3)" data-idx="3">4. ตัวชี้วัด (Metrics)</button>
+      <button class="tab-btn" onclick="goToSection(4)" data-idx="4">5. ผลลัพธ์ (Results)</button>
+      <button class="tab-btn tab-btn-demo" onclick="goToSection(5)" data-idx="5">⚡ 6. ทดสอบสด (Live Demo)</button>
     </nav>
 
     <div class="nav-end">
       <div class="nav-reports-wrap">
         <button class="nav-reports-btn" onclick="toggleReportsDropdown(event)">
-          <span>📑 ผลลัพธ์ & แดชบอร์ด</span> ▾
+          <span>📑 รายงาน & แดชบอร์ด</span> ▾
         </button>
         <div class="reports-dropdown-menu" id="reportsDropdown">
           <a class="reports-dropdown-item" href="/benchmark" target="_blank" onclick="closeReportsDropdown()">
@@ -61,7 +61,7 @@
             <span class="item-icon">🖼️</span>
             <div class="item-text">
               <span class="item-title">Model Visual Gallery</span>
-              <span class="item-sub">แกลเลอรีภาพผลลัพธ์เปรียบเทียบ 4x</span>
+              <span class="item-sub">แกลเลอรีภาพผลลัพธ์เปรียบเทียบ 4×</span>
             </div>
           </a>
           <a class="reports-dropdown-item" href="/eda" target="_blank" onclick="closeReportsDropdown()">
@@ -73,13 +73,13 @@
           </a>
         </div>
       </div>
-      <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusLabel">Connecting…</span></div>
+      <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusLabel">กำลังเชื่อมต่อ…</span></div>
       <div class="device-pill" id="devicePill">GPU: –</div>
     </div>
   </header>
 
   <!-- ========== KEYBOARD HINT ========== -->
-  <div class="key-hint" id="keyHint">← → เปลี่ยนหัวข้อ &nbsp;|&nbsp; ⎋ ปิดหมายเหตุ</div>
+  <div class="key-hint" id="keyHint">ใช้ปุ่ม ← → เพื่อเปลี่ยนหัวข้อ &nbsp;|&nbsp; กด Esc เพื่อปิดหน้าต่าง</div>
 
   <!-- ========== MAIN CONTENT ========== -->
   <main class="main-wrap">
@@ -88,71 +88,98 @@
     <section class="pres-section active" id="sec0">
       <div class="hero-section">
         <div class="hero-kicker">CP461 Computer Vision · Srinakharinwirot University</div>
-        <h1 class="hero-title">Real-World <span class="grad-text">Super-Resolution</span><br>with Real-ESRNet (4×)</h1>
+        <h1 class="hero-title">ขยายภาพคมชัด 4× จากภาพถ่ายจริง<br>ด้วย <span class="grad-text">Real-ESRNet & Real-ESRGAN</span></h1>
         <p class="hero-desc">
-          การฟื้นฟูความละเอียดภาพจากความเสื่อมสภาพในโลกจริง (Real-world Image Restoration)<br>
-          ด้วยโครงข่ายประสาทเทียม <strong>RRDBNet</strong> และกระบวนการจำลองความเสื่อมสภาพแบบ 2 ขั้น
+          ระบบฟื้นฟูรายละเอียดภาพจากความเสื่อมสภาพในโลกจริง (เบลอ, Noise, รอยแตก JPEG)<br>
+          ปรับจูนให้ฝึกและรันบน GPU ระดับนักศึกษา (RTX 3050 Ti · 4GB VRAM) ได้อย่างคมชัดและสมจริง
         </p>
 
+        <div class="hero-cta-row">
+          <button class="btn-primary-cta" onclick="goToSection(5)">⚡ ทดลองขยายภาพของคุณ (Live Demo)</button>
+          <button class="btn-secondary-cta" onclick="goToSection(4)">🔬 ดูผลเปรียบเทียบ 6 โมเดล</button>
+        </div>
+
         <div class="hero-stat-row">
-          <div class="stat-pill">4× Upscaling</div>
-          <div class="stat-pill">RRDBNet · 16.7M params</div>
-          <div class="stat-pill">L1 Pixel Loss</div>
-          <div class="stat-pill">RTX 3050 Ti · CUDA 12.4</div>
-          <div class="stat-pill">RealESRGAN_OurTeam_Improved</div>
+          <div class="stat-pill">ขยายความละเอียด 4×</div>
+          <div class="stat-pill">โครงข่าย RRDBNet · 16.7M params</div>
+          <div class="stat-pill">2-Stage Degradation</div>
+          <div class="stat-pill">RTX 3050 Ti · 4GB VRAM</div>
+          <div class="stat-pill">⭐ RealESRGAN_OurTeam_Improved</div>
         </div>
       </div>
 
-      <!-- Problem Statement -->
-      <div class="card-grid cols-2 mt-32">
-        <div class="glass-card pa-28">
-          <div class="card-kicker">❓ ปัญหา (The Problem)</div>
-          <h2 class="card-title">ทำไม Bicubic ไม่เพียงพอ?</h2>
+      <!-- 3-step summary cards -->
+      <div class="card-grid cols-3 mt-24">
+        <div class="glass-card pa-24">
+          <span class="overview-step-tag tag-problem">1. ปัญหาภาพจริง (Problem)</span>
+          <h2 class="card-title">ทำไม Bicubic ถึงขยายแล้วเบลอ?</h2>
           <p class="card-body">
-            ภาพถ่ายในโลกจริงมีความเสื่อมสภาพจากหลายแหล่งพร้อมกัน ทั้งการสั่นไหวของกล้อง (Motion Blur),
-            สัญญาณรบกวนจากเซนเซอร์ (Sensor Noise), การบีบอัด JPEG (Compression Artifact)
-            และความละเอียดต่ำจากระยะห่าง — Bicubic Interpolation ขยายภาพโดยการประมาณค่าระหว่างพิกเซล
-            ทำให้ภาพ<strong>เบลอมัวและสูญเสียรายละเอียด</strong> ไม่สามารถสร้างเนื้อหาใหม่ได้
+            ภาพจริงมีความเสื่อมสภาพปนกันหลายแบบ ทั้งภาพสั่น (Blur), สัญญาณรบกวน (Noise) และรอยแตก JPEG
+            การขยายด้วย Bicubic เป็นเพียงการเฉลี่ยค่าพิกเซลเดิม จึงยิ่งทำให้ภาพ<strong>เบลอมัวและขอบแตก</strong>
           </p>
           <div class="problem-chips">
-            <span class="chip-red">📷 Blur & Camera Shake</span>
+            <span class="chip-red">📷 ภาพสั่น / เบลอ</span>
             <span class="chip-red">⚡ Sensor Noise</span>
-            <span class="chip-red">🗜️ JPEG Artifacts</span>
-            <span class="chip-red">🔍 Resolution Loss</span>
+            <span class="chip-red">🗜️ รอยแตก JPEG</span>
           </div>
         </div>
 
-        <div class="glass-card pa-28">
-          <div class="card-kicker">💡 แนวทางแก้ไข (Our Approach)</div>
-          <h2 class="card-title">Two-Stage Degradation + RRDBNet</h2>
+        <div class="glass-card pa-24">
+          <span class="overview-step-tag tag-solution">2. แนวทางของทีม (Solution)</span>
+          <h2 class="card-title">2-Stage Degradation + RRDBNet</h2>
           <p class="card-body">
-            <strong>Real-ESRNet</strong> ฝึกให้โมเดลเรียนรู้การกู้คืนภาพจากความเสื่อมสภาพสังเคราะห์ที่ซับซ้อน
-            ด้วยกระบวนการ <em>High-Order Degradation</em> 2 ชั้น เพื่อให้โมเดลทนทานต่อภาพจริงที่มีความเสื่อมสภาพหลายรูปแบบพร้อมกัน
-            และสามารถ<strong>สร้างรายละเอียดภาพใหม่</strong>ที่คมชัดได้
+            จำลองความเสื่อมสภาพซ้อน 2 ชั้นระหว่างฝึก เพื่อให้ <strong>RRDBNet (23 บล็อก)</strong> และ
+            <strong>U-Net Discriminator</strong> เรียนรู้การกู้คืนพื้นผิวและขอบเส้นจริง พร้อมจัดการหน่วยความจำให้รันบนการ์ดจอ 4GB ได้
           </p>
           <div class="problem-chips">
-            <span class="chip-green">✅ ฟื้นฟูขอบเส้นและพื้นผิว</span>
-            <span class="chip-green">✅ ไม่มี Hallucination แปลกปลอม</span>
-            <span class="chip-green">✅ ขยายภาพ 4× อย่างคมชัด</span>
+            <span class="chip-green">✅ กู้คืนพื้นผิวสมจริง</span>
+            <span class="chip-green">✅ ลดลายหลอน (Ringing)</span>
+            <span class="chip-green">✅ Dynamic Tiling</span>
+          </div>
+        </div>
+
+        <div class="glass-card pa-24">
+          <span class="overview-step-tag tag-result">3. ผลลัพธ์ที่ได้ (Key Result)</span>
+          <h2 class="card-title">ชนะ Official ครบทุกมิติหลัก</h2>
+          <p class="card-body">
+            จากการวัดผลบนภาพมาตรฐาน 20 ภาพ โมเดลของทีมทำคะแนนได้เหนือกว่าโมเดลทางการ <strong>Real-ESRGAN Official</strong>
+            ทั้งความแม่นยำและสายตามนุษย์
+          </p>
+          <div class="problem-chips">
+            <span class="chip-green">PSNR 22.02 dB (vs 21.75)</span>
+            <span class="chip-green">LPIPS 0.2293 (vs 0.2349)</span>
+            <span class="chip-green">NIQE 4.631 (vs 4.746)</span>
           </div>
         </div>
       </div>
 
-      <!-- Visual comparison teaser -->
+      <!-- Interactive Before/After Sample Preview -->
       <div class="glass-card pa-28 mt-24">
-        <div class="card-kicker">👁️ ตัวอย่างเปรียบเทียบเบื้องต้น (เปิด "Live Demo" เพื่อทดสอบสดบนภาพของคุณ)</div>
-        <div class="teaser-grid" id="teaserGrid">
-          <div class="teaser-col">
-            <div class="teaser-label teaser-label-bad">Low-Res Input (Bicubic 4×)</div>
-            <img class="teaser-img" src="/api/inputs/0014.jpg" alt="Low Res" onerror="this.style.display='none'">
+        <div class="hero-compare-head">
+          <div>
+            <div class="card-kicker" style="margin-bottom:4px;">👁️ ตัวอย่างผลลัพธ์จริง (ซูมระดับพิกเซล 1:1 — คลิกที่ภาพเพื่อขยายใหญ่)</div>
+            <div style="font-size:0.9rem; color:var(--muted);">ลองสลับดูตัวอย่างภาพจริง เทียบความต่างระหว่าง Bicubic กับโมเดลของทีมเรา</div>
+          </div>
+          <div class="sample-switch-row">
+            <button class="sample-switch-btn active" onclick="switchOverviewSample('bird', this)">🐦 ขนนก (Bird)</button>
+            <button class="sample-switch-btn" onclick="switchOverviewSample('butterfly', this)">🦋 ปีกผีเสื้อ (Butterfly)</button>
+            <button class="sample-switch-btn" onclick="switchOverviewSample('baboon', this)">🐒 ขนลิง (Baboon)</button>
+          </div>
+        </div>
+
+        <div class="compare-pair-grid">
+          <div class="compare-pair-col">
+            <div class="teaser-label teaser-label-bad">❌ Bicubic Baseline 4× (เบลอมัว)</div>
+            <img class="teaser-img" id="heroBeforeImg" src="/static/crops/bird_bicubic.png" alt="Bicubic 4x Comparison" onclick="openImageLightbox(this.src, 'Bicubic Baseline 4× (ภาพเบลอและขาดรายละเอียด)')">
           </div>
           <div class="teaser-arrow">➔</div>
-          <div class="teaser-col">
-            <div class="teaser-label teaser-label-good">Our Real-ESRNet 4× Output</div>
-            <div class="teaser-placeholder" id="teaserPlaceholder">
-              <span>ไปที่ ⚡ Live Demo เพื่อดูผลขยายภาพสด</span>
-            </div>
+          <div class="compare-pair-col is-best">
+            <div class="teaser-label teaser-label-good">⭐ Our Team Model 4× (คมชัดสมจริง)</div>
+            <img class="teaser-img" id="heroAfterImg" src="/static/crops/bird_ours.png" alt="Our Team Model 4x Comparison" onclick="openImageLightbox(this.src, 'Our Team Model 4× (RealESRGAN_OurTeam_Improved)')">
           </div>
+        </div>
+        <div class="compare-pair-caption" id="heroCompareCaption">
+          สังเกตเส้นขนรอบดวงตาและแสงสะท้อนในลูกตาของนก — โมเดลของทีมฟื้นฟูรายละเอียดเส้นขนให้คมชัดโดยไม่เกิดขอบหลอกตา
         </div>
       </div>
     </section>
@@ -162,7 +189,15 @@
       <div class="section-header">
         <div class="sec-kicker">📂 ข้อมูลที่ใช้ (Datasets)</div>
         <h2 class="sec-title">ชุดข้อมูลฝึกสอนและทดสอบ</h2>
-        <p class="sec-desc">รวบรวมและจัดเตรียมชุดภาพคุณภาพสูงจากแหล่งมาตรฐานในวงการ Super-Resolution เพื่อฝึกสอนโมเดล</p>
+        <p class="sec-desc">รวบรวมภาพถ่ายความละเอียดสูงจาก 3 แหล่งมาตรฐาน เพื่อสร้างความหลากหลายของพื้นผิว ฉากธรรมชาติ และวัตถุ</p>
+      </div>
+
+      <div class="tldr-banner">
+        <span class="tldr-badge">💡 สรุปสั้น (TL;DR)</span>
+        <div class="tldr-text">
+          ใช้ภาพความละเอียดสูงกว่า <strong>4,450 ภาพ</strong> หั่นเป็นชิ้นย่อย (Patches) ขนาด 512×512 จำนวน <strong>~40,000 ชิ้น</strong>
+          แบ่ง Train ~97.2% / Val ~2.5% และแยกชุดทดสอบมาตรฐาน <strong>20 ภาพเต็มใบ</strong> เพื่อวัดผลอย่างยุติธรรม
+        </div>
       </div>
 
       <div class="card-grid cols-3">
@@ -174,8 +209,8 @@
             <div class="ds-stat"><span class="ds-num">800</span><span class="ds-unit">Train Images</span></div>
             <div class="ds-stat"><span class="ds-num">100</span><span class="ds-unit">Val Images</span></div>
           </div>
-          <p class="ds-desc">ภาพถ่ายคุณภาพสูง 2K+ ความละเอียด ครอบคลุมหัวข้อที่หลากหลาย (คน, วิว, สัตว์, งานสถาปัตย์)</p>
-          <div class="ds-tag">Train Split: 800</div>
+          <p class="ds-desc">ภาพถ่ายคุณภาพสูง 2K+ ครอบคลุมคน วิว สัตว์ และงานสถาปัตยกรรม เป็นแกนหลักด้านโครงสร้างภาพ</p>
+          <div class="ds-tag">Train Split: 800 ภาพ</div>
         </div>
 
         <div class="glass-card pa-24 dataset-card">
@@ -186,49 +221,49 @@
             <div class="ds-stat"><span class="ds-num">2,650</span><span class="ds-unit">Images</span></div>
             <div class="ds-stat"><span class="ds-num">~2K</span><span class="ds-unit">Resolution</span></div>
           </div>
-          <p class="ds-desc">ภาพถ่ายจากนักถ่ายภาพมืออาชีพบน Flickr ความหลากหลายสูง เสริมความครอบคลุมเนื้อหาให้กับ DIV2K</p>
-          <div class="ds-tag">Train Split: 2,650</div>
+          <p class="ds-desc">ภาพถ่ายจากช่างภาพมืออาชีพบน Flickr ช่วยเพิ่มความหลากหลายของแสง สี และเนื้อหาที่ DIV2K ไม่มี</p>
+          <div class="ds-tag">Train Split: 2,650 ภาพ</div>
         </div>
 
         <div class="glass-card pa-24 dataset-card">
           <div class="ds-icon">🌿</div>
-          <div class="ds-name">OTS Clear</div>
-          <div class="ds-source">Outdoor Training Set (Filtered)</div>
+          <div class="ds-name">OST / OTS Clear</div>
+          <div class="ds-source">Outdoor Scene & Clear GT</div>
           <div class="ds-stats">
-            <div class="ds-stat"><span class="ds-num">~72K</span><span class="ds-unit">Clear pairs</span></div>
-            <div class="ds-stat"><span class="ds-num">GT only</span><span class="ds-unit">extracted</span></div>
+            <div class="ds-stat"><span class="ds-num">~1,000</span><span class="ds-unit">Selected Clear</span></div>
+            <div class="ds-stat"><span class="ds-num">GT only</span><span class="ds-unit">Filtered</span></div>
           </div>
-          <p class="ds-desc">กรองเฉพาะภาพ Ground Truth ใสจาก Outdoor Haze dataset เพิ่มความหลากหลายฉากกลางแจ้ง</p>
-          <div class="ds-tag">Filter: _GT.png only</div>
+          <p class="ds-desc">คัดกรองเฉพาะภาพ Ground Truth คมชัดฉากกลางแจ้ง (ใบไม้, ขน, หิน, น้ำ) เพื่อฝึกพื้นผิวละเอียด</p>
+          <div class="ds-tag">Micro-texture Focus</div>
         </div>
       </div>
 
       <!-- Sub-image extraction process -->
       <div class="glass-card pa-28 mt-24">
-        <div class="card-kicker">✂️ กระบวนการจัดเตรียมข้อมูล (Data Preparation Pipeline)</div>
+        <div class="card-kicker">✂️ ขั้นตอนการเตรียมข้อมูล (Data Preparation Pipeline)</div>
         <div class="data-prep-flow">
           <div class="prep-step">
             <div class="prep-num">1</div>
-            <div class="prep-title">Download & Filter</div>
-            <div class="prep-desc">ดาวน์โหลด DIV2K, Flickr2K, OTS<br>กรอง OTS ให้เหลือเฉพาะ GT Clear</div>
+            <div class="prep-title">รวบรวม & คัดกรอง</div>
+            <div class="prep-desc">รวมภาพจาก DIV2K, Flickr2K<br>และคัดเฉพาะภาพ GT ที่คมชัด</div>
           </div>
           <div class="prep-arrow">→</div>
           <div class="prep-step">
             <div class="prep-num">2</div>
-            <div class="prep-title">Extract Sub-images</div>
-            <div class="prep-desc">ตัดภาพเป็น patches ขนาด 512×512<br>Sliding Window: step = 480</div>
+            <div class="prep-title">ตัดภาพเป็น Patches</div>
+            <div class="prep-desc">แบ่งภาพเป็น 512×512 px<br>แบบ Sliding Window (step = 480)</div>
           </div>
           <div class="prep-arrow">→</div>
           <div class="prep-step">
             <div class="prep-num">3</div>
-            <div class="prep-title">Train / Val Split</div>
-            <div class="prep-desc">สุ่มแบ่ง seed=42<br>Train ≈39K | Val ≈1K | Test: DIV2K Val</div>
+            <div class="prep-title">แบ่ง Train / Val / Test</div>
+            <div class="prep-desc">สุ่มแบ่ง seed=42<br>Train ~39K | Val ~1K | Test 20 ภาพ</div>
           </div>
           <div class="prep-arrow">→</div>
           <div class="prep-step">
             <div class="prep-num">4</div>
-            <div class="prep-title">Generate Meta-info</div>
-            <div class="prep-desc">สร้าง meta_info_train.txt<br>meta_info_val.txt สำหรับ BasicSR</div>
+            <div class="prep-title">สร้าง Meta-info</div>
+            <div class="prep-desc">สร้าง meta_info_train.txt<br>และ meta_info_val.txt สำหรับเทรน</div>
           </div>
         </div>
       </div>
@@ -238,32 +273,32 @@
         <div class="glass-card pa-24 text-center">
           <div class="big-num text-blue">~39,000</div>
           <div class="big-label">Training Sub-images (~97.2%)</div>
-          <div class="big-sub">DIV2K Train (800) + Flickr2K (2,650) + OST Patches (512×512)</div>
+          <div class="big-sub">ภาพย่อย 512×512 จาก DIV2K + Flickr2K + OST สำหรับฝึกโมเดล</div>
         </div>
         <div class="glass-card pa-24 text-center">
           <div class="big-num text-cyan">~1,000</div>
           <div class="big-label">Validation Sub-images (~2.5%)</div>
-          <div class="big-sub">DIV2K Val Held-out Crops (ตรวจวัด Loss ทุก 5,000 iters)</div>
+          <div class="big-sub">ภาพแยกตรวจวัด Loss ทุกๆ 5,000 iterations เพื่อกัน Overfitting</div>
         </div>
         <div class="glass-card pa-24 text-center">
           <div class="big-num text-purple">20 + 100</div>
-          <div class="big-label">Test Images (Full Resolution)</div>
-          <div class="big-sub">20 Standard Benchmark Images + 100 DIV2K Val ไม่มีการตัด Crop</div>
+          <div class="big-label">Test Images (เต็มใบไม่ตัด Crop)</div>
+          <div class="big-sub">20 ภาพ Benchmark มาตรฐาน + 100 DIV2K Val วัดผลความคมชัดจริง</div>
         </div>
       </div>
 
       <!-- Detailed Split Table -->
-      <div class="glass-card pa-24 mt-16">
-        <div class="card-kicker">📑 สรุปการแบ่งชุดข้อมูล (Dataset Split & Patch Extraction Proportions)</div>
+      <div class="glass-card pa-24 mt-20">
+        <div class="card-kicker">📑 สรุปสัดส่วนชุดข้อมูล (Dataset Split Overview)</div>
         <div class="table-wrap">
           <table class="benchmark-table">
             <thead>
               <tr>
                 <th>ชุดข้อมูล (Dataset)</th>
                 <th>จำนวนภาพต้นฉบับ</th>
-                <th>ความละเอียด (Resolution)</th>
-                <th>วัตถุประสงค์การใช้งาน</th>
-                <th>จำนวน Sub-image Patches (512×512)</th>
+                <th>ความละเอียด</th>
+                <th>บทบาทในการฝึก/ทดสอบ</th>
+                <th>จำนวน Sub-image Patches</th>
               </tr>
             </thead>
             <tbody>
@@ -271,29 +306,29 @@
                 <td><strong>DIV2K (DIVerse 2K)</strong></td>
                 <td>800 Train / 100 Val</td>
                 <td>2K High-Definition RGB</td>
-                <td>ชุดข้อมูลหลักสำหรับโครงสร้างและความคมชัด</td>
+                <td>ชุดข้อมูลหลักด้านโครงสร้างและความคมชัด</td>
                 <td>~14,000 Patches</td>
               </tr>
               <tr>
                 <td><strong>Flickr2K</strong></td>
                 <td>2,650 ภาพ</td>
-                <td>ภาพถ่ายกล้องจริงความละเอียดสูง</td>
-                <td>ขยายความหลากหลายของเนื้อหาและพื้นผิว</td>
+                <td>ภาพถ่ายกล้องจริง ~2K</td>
+                <td>เพิ่มความหลากหลายของฉากและวัตถุ</td>
                 <td>~21,000 Patches</td>
               </tr>
               <tr>
                 <td><strong>Outdoor Scene Training (OST)</strong></td>
                 <td>~1,000 ภาพ</td>
-                <td>พื้นผิวธรรมชาติ (หญ้า, ขน, น้ำ, หิน)</td>
-                <td>เทรนความละเอียดสูงระดับ Micro-texture</td>
+                <td>พื้นผิวธรรมชาติ (หญ้า, ขน, หิน)</td>
+                <td>ฝึกความละเอียดระดับ Micro-texture</td>
                 <td>~5,100 Patches</td>
               </tr>
               <tr class="best-row">
                 <td><strong>20 Standard Test Benchmark</strong></td>
                 <td>20 ภาพมาตรฐาน</td>
-                <td>ขนาดภาพดั้งเดิม (Uncropped)</td>
-                <td><strong>วัดผลเปรียบเทียบมาตรฐานทั้ง 6 โมเดล</strong></td>
-                <td>ทดสอบเต็มภาพทั้งผืน เพื่อความยุติธรรม 100%</td>
+                <td>ขนาดต้นฉบับเต็มใบ</td>
+                <td><strong>ชุดวัดผลเปรียบเทียบกลางทั้ง 6 โมเดล</strong></td>
+                <td>ทดสอบเต็มภาพ เพื่อความยุติธรรม 100%</td>
               </tr>
             </tbody>
           </table>
@@ -305,10 +340,9 @@
         <div class="card-kicker">📊 สำรวจข้อมูลเชิงลึก (Interactive Data Exploration)</div>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
           <div>
-            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:6px; color:#f1f5f9;">📈 EDA Dashboard: สำรวจการกระจายตัวของ Dataset & Degradation</h3>
-            <p style="color:var(--muted); font-size:0.85rem; max-width:720px; margin:0;">
-              ตรวจสอบกราฟสถิติภาพรวม DIV2K (800+100), Flickr2K (2,650), OTS Clear, สัดส่วนขนาด Aspect Ratio,
-              และการกระจายตัวของพารามิเตอร์จำลองความเสื่อมสภาพ (Blur Kernel σ=0.2–3.0, Noise Level, JPEG Quality)
+            <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:6px; color:#f8fafc;">📈 EDA Dashboard: สำรวจการกระจายตัวของ Dataset & Degradation</h3>
+            <p style="color:var(--muted); font-size:0.9rem; max-width:720px; margin:0;">
+              ดูกราฟสถิติของ DIV2K, Flickr2K, OTS Clear, สัดส่วน Aspect Ratio และการกระจายค่าจำลองความเสื่อมสภาพ (Blur σ=0.2–3.0, Noise, JPEG Quality)
             </p>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
@@ -323,91 +357,99 @@
     <section class="pres-section" id="sec2">
       <div class="section-header">
         <div class="sec-kicker">⚙️ วิธีการและสถาปัตยกรรม (Methodology & Pipeline)</div>
-        <h2 class="sec-title">Two-Stage Degradation Pipeline + RRDBNet</h2>
-        <p class="sec-desc">จุดเด่นของ Real-ESRNet คือการจำลองความเสื่อมสภาพระดับสูง (High-Order Degradation) เพื่อให้โมเดลแข็งแกร่งต่อภาพจริง</p>
+        <h2 class="sec-title">Two-Stage Degradation + RRDBNet</h2>
+        <p class="sec-desc">หัวใจสำคัญคือการจำลองความเสื่อมสภาพเสมือนภาพจริง 2 รอบซ้อน ก่อนป้อนเข้าโครงข่ายกู้คืนความคมชัด</p>
+      </div>
+
+      <div class="tldr-banner">
+        <span class="tldr-badge">💡 สรุปสั้น (TL;DR)</span>
+        <div class="tldr-text">
+          จำลองความเสื่อมสภาพ <strong>2 ขั้นตอน</strong> (เบลอ + ย่อขยาย + Noise + JPEG ซ้อนกัน 2 รอบ) ร่วมกับโครงข่าย
+          <strong>RRDBNet 23 บล็อก (16.7M params)</strong> และ <strong>U-Net Discriminator</strong> เพื่อกู้คืนภาพจริงโดยไม่เกิดลายหลอน
+        </div>
       </div>
 
       <!-- Main Architecture Overview -->
       <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">🏗️ สถาปัตยกรรมโมเดล (Model Architecture) — RRDBNet x4</div>
+        <div class="card-kicker">🏗️ โครงสร้างโครงข่ายประสาทเทียม (Generator Architecture) — RRDBNet ×4</div>
         <div class="arch-grid">
           <div class="arch-box arch-input">
-            <div class="arch-label">LR Input (x)</div>
+            <div class="arch-label">ภาพเข้า LR (x)</div>
             <div class="arch-dims">H/4 × W/4 × 3</div>
-            <div class="arch-desc">ภาพ Low-Resolution ที่ผ่านการ Degrade</div>
+            <div class="arch-desc">ภาพความละเอียดต่ำที่มีสัญญาณรบกวน</div>
           </div>
           <div class="arch-arrow">→</div>
           <div class="arch-box arch-conv">
-            <div class="arch-label">Conv3×3</div>
-            <div class="arch-dims">64 Features</div>
-            <div class="arch-desc">Shallow Feature Extraction</div>
+            <div class="arch-label">Conv 3×3</div>
+            <div class="arch-dims">64 Channels</div>
+            <div class="arch-desc">สกัดคุณลักษณะเบื้องต้น (Shallow Features)</div>
           </div>
           <div class="arch-arrow">→</div>
           <div class="arch-box arch-rrdb">
             <div class="arch-label">23× RRDB Blocks</div>
             <div class="arch-dims">Dense + Residual</div>
-            <div class="arch-desc">Residual-in-Residual Dense Blocks<br>16.7M parameters total</div>
+            <div class="arch-desc">สกัดและสร้างรายละเอียดลึก<br>(รวม 16.7M พารามิเตอร์)</div>
           </div>
           <div class="arch-arrow">→</div>
           <div class="arch-box arch-up">
             <div class="arch-label">Pixel Shuffle ×4</div>
-            <div class="arch-dims">Upsampling</div>
-            <div class="arch-desc">Sub-pixel convolution upscaling</div>
+            <div class="arch-dims">2× แล้วขยายอีก 2×</div>
+            <div class="arch-desc">ขยายพิกเซลขึ้น 4 เท่าอย่างเนียนตา</div>
           </div>
           <div class="arch-arrow">→</div>
           <div class="arch-box arch-output">
-            <div class="arch-label">SR Output (ŷ)</div>
+            <div class="arch-label">ภาพผลลัพธ์ SR (ŷ)</div>
             <div class="arch-dims">H × W × 3</div>
-            <div class="arch-desc">ภาพ 4× Super-Resolved</div>
+            <div class="arch-desc">ภาพความละเอียดสูงขึ้น 4×</div>
           </div>
         </div>
       </div>
 
       <!-- Two-Stage Degradation -->
       <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">🌀 Two-Stage High-Order Degradation Pipeline</div>
+        <div class="card-kicker">🌀 กระบวนการจำลองความเสื่อมสภาพแบบ 2 ชั้น (Two-Stage High-Order Degradation)</div>
         <div class="deg-pipeline">
           <div class="deg-step deg-gt">
-            <div class="deg-badge">Ground Truth y</div>
-            <div class="deg-title">High-Res Image</div>
+            <div class="deg-badge">Ground Truth (y)</div>
+            <div class="deg-title">ภาพต้นฉบับคมชัด</div>
             <div class="deg-chips">
-              <span>DIV2K / Flickr2K / OTS</span>
+              <span>DIV2K / Flickr2K / OST</span>
             </div>
           </div>
 
           <div class="deg-arrow">⟹</div>
 
           <div class="deg-step deg-stage1">
-            <div class="deg-badge">Stage 1: First Degradation</div>
-            <div class="deg-title">การเสื่อมสภาพชั้นแรก</div>
+            <div class="deg-badge">Stage 1: รอบแรก</div>
+            <div class="deg-title">จำลองเสื่อมสภาพชั้นที่ 1</div>
             <div class="deg-chips">
               <span>Blur (Gaussian, Sinc kernel)</span>
-              <span>Resize ↕ (0.15–1.5×)</span>
+              <span>ย่อ/ขยาย (0.15–1.5×)</span>
               <span>Noise (Gaussian + Poisson)</span>
-              <span>JPEG Quality 30–95</span>
+              <span>บีบอัด JPEG (Q 30–95)</span>
             </div>
           </div>
 
           <div class="deg-arrow">⟹</div>
 
           <div class="deg-step deg-stage2">
-            <div class="deg-badge">Stage 2: Second Degradation</div>
-            <div class="deg-title">การเสื่อมสภาพชั้นที่สอง</div>
+            <div class="deg-badge">Stage 2: รอบสอง</div>
+            <div class="deg-title">จำลองเสื่อมสภาพชั้นที่ 2</div>
             <div class="deg-chips">
               <span>Second Blur (prob 0.8)</span>
-              <span>Conservative Resize (0.3–1.2×)</span>
-              <span>Poisson + Gaussian Noise</span>
-              <span>Final Sinc Filter (prob 0.8)</span>
+              <span>ย่อ/ขยายซ้ำ (0.3–1.2×)</span>
+              <span>เพิ่ม Noise + JPEG ซ้ำ</span>
+              <span>Final Sinc Filter (กันขอบเรือง)</span>
             </div>
           </div>
 
           <div class="deg-arrow">⟹</div>
 
           <div class="deg-step deg-lr">
-            <div class="deg-badge">Train Input x</div>
-            <div class="deg-title">Low-Resolution (Synthetic)</div>
+            <div class="deg-badge">Train Input (x)</div>
+            <div class="deg-title">ภาพฝึกเสมือนภาพจริง</div>
             <div class="deg-chips">
-              <span>เสมือนภาพจริงจากโลกจริง</span>
+              <span>จำลองภาพถ่ายจริงที่เสื่อมสภาพซับซ้อน</span>
             </div>
           </div>
         </div>
@@ -416,29 +458,28 @@
       <!-- Training Config -->
       <div class="card-grid cols-2 mt-24">
         <div class="glass-card pa-24">
-          <div class="card-kicker">🛠️ Training Configuration (RTX 3050 Ti, 4GB VRAM)</div>
+          <div class="card-kicker">🛠️ การตั้งค่าการฝึกโมเดล (RTX 3050 Ti · 4GB VRAM)</div>
           <table class="config-table">
-            <tr><td>Patch size (gt_size)</td><td><strong>192 × 192</strong></td></tr>
-            <tr><td>Batch size</td><td><strong>4</strong> (ปรับลดจาก 12)</td></tr>
-            <tr><td>Total iterations</td><td><strong>52,000</strong> (trained)</td></tr>
-            <tr><td>Best checkpoint</td><td><strong class="text-cyan">RealESRGAN_OurTeam_Improved.pth</strong></td></tr>
+            <tr><td>ขนาด Patch (gt_size)</td><td><strong>192 × 192</strong> (ปรับให้พอดี 4GB VRAM)</td></tr>
+            <tr><td>Batch size</td><td><strong>4</strong> (ลดจากค่ามาตรฐาน 12)</td></tr>
+            <tr><td>จำนวนรอบฝึก (Iterations)</td><td><strong>52,000 iters</strong></td></tr>
+            <tr><td>Best Checkpoint</td><td><strong class="text-cyan">RealESRGAN_OurTeam_Improved.pth</strong></td></tr>
             <tr><td>Optimizer</td><td><strong>Adam</strong> (β1=0.9, β2=0.99)</td></tr>
             <tr><td>Learning Rate</td><td><strong>2 × 10⁻⁴</strong></td></tr>
-            <tr><td>Loss Function</td><td><strong>L1 Pixel Loss</strong></td></tr>
-            <tr><td>Workers</td><td><strong>4</strong> (Windows stability)</td></tr>
+            <tr><td>Loss (Pre-train / Fine-tune)</td><td><strong>L1 Loss → L1 + Perceptual + GAN</strong></td></tr>
+            <tr><td>Dynamic Inference Tile</td><td><strong>Tile = 256</strong> (ขยายภาพใหญ่ได้ไม่ OOM)</td></tr>
           </table>
         </div>
         <div class="glass-card pa-24">
-          <div class="card-kicker">⚖️ เปรียบเทียบ Real-ESRNet vs Real-ESRGAN</div>
+          <div class="card-kicker">⚖️ เทียบความต่าง: Real-ESRNet vs Real-ESRGAN</div>
           <table class="config-table">
-            <thead><tr><th></th><th>Real-ESRNet (Ours)</th><th>Real-ESRGAN</th></tr></thead>
+            <thead><tr><th>หัวข้อเปรียบเทียบ</th><th>Real-ESRNet (Pre-train)</th><th>Real-ESRGAN (Final)</th></tr></thead>
             <tr><td>Generator</td><td>RRDBNet ✓</td><td>RRDBNet ✓</td></tr>
-            <tr><td>Discriminator</td><td><span class="text-green">ไม่มี</span></td><td>U-Net Discriminator</td></tr>
-            <tr><td>Loss</td><td><span class="text-green">L1 Pixel only</span></td><td>L1 + Perceptual + GAN</td></tr>
-            <tr><td>Training Stability</td><td><span class="text-green">สูง (ง่ายกว่า)</span></td><td>ปานกลาง (GAN collapse)</td></tr>
-            <tr><td>Hallucination Risk</td><td><span class="text-green">ต่ำมาก</span></td><td>ปานกลาง</td></tr>
-            <tr><td>Texture Realism</td><td>ดี</td><td><span class="text-cyan">ดีมาก</span></td></tr>
-            <tr><td>Role ในระบบ</td><td>Pre-training stage</td><td>Final GAN stage</td></tr>
+            <tr><td>Discriminator</td><td><span class="text-green">ไม่มี (ฝึกง่าย)</span></td><td>U-Net + Spectral Norm</td></tr>
+            <tr><td>Loss Function</td><td>L1 Pixel Loss อย่างเดียว</td><td>L1 + Perceptual + GAN</td></tr>
+            <tr><td>ลักษณะภาพที่ได้</td><td><span class="text-green">PSNR สูง แต่ผิวภาพเรียบ</span></td><td><span class="text-cyan">รายละเอียดและพื้นผิวคมชัดสมจริง</span></td></tr>
+            <tr><td>ความเสถียรในการฝึก</td><td>สูงมาก (ปูพื้นฐานก่อน)</td><td>ปานกลาง (อาศัย Pre-train ช่วย)</td></tr>
+            <tr><td>บทบาทในระบบของเรา</td><td>Stage 1 (Pre-training)</td><td>Stage 2 (Fine-tuning โมเดลหลัก)</td></tr>
           </table>
         </div>
       </div>
@@ -448,79 +489,107 @@
     <section class="pres-section" id="sec3">
       <div class="section-header">
         <div class="sec-kicker">📊 ตัวชี้วัดประสิทธิภาพ (Evaluation Metrics)</div>
-        <h2 class="sec-title">วิธีวัดคุณภาพ Super-Resolution</h2>
-        <p class="sec-desc">งานวิจัยด้าน Image Restoration ใช้ตัวชี้วัดหลายมิติพร้อมกัน เพราะตัวชี้วัดแต่ละตัวสะท้อนมุมมองที่แตกต่างกัน</p>
+        <h2 class="sec-title">วิธีวัดคุณภาพภาพ Super-Resolution</h2>
+        <p class="sec-desc">ไม่มีตัวเลขตัวเดียวที่บอกคุณภาพได้ครบ จึงต้องใช้ตัวชี้วัดหลายมิติร่วมกัน ทั้งความถูกต้องพิกเซล ความสวยตามสายตา และความเร็ว</p>
+      </div>
+
+      <div class="tldr-banner">
+        <span class="tldr-badge">💡 สรุปสั้น (TL;DR)</span>
+        <div class="tldr-text">
+          ดูคู่กัน 4 ด้าน: <strong>1) ตรงต้นฉบับ</strong> (PSNR, SSIM ยิ่งสูงยิ่งตรง) ·
+          <strong>2) สวยถูกใจคนดู</strong> (LPIPS ยิ่งต่ำยิ่งดี, MUSIQ ยิ่งสูงยิ่งดี) ·
+          <strong>3) เป็นธรรมชาติไร้รอยแตก</strong> (NIQE ยิ่งต่ำยิ่งดี) ·
+          <strong>4) ใช้งานจริงไว</strong> (Latency ยิ่งต่ำยิ่งไว)
+        </div>
       </div>
 
       <div class="card-grid cols-3">
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-blue">📐</div>
-          <div class="metric-name">PSNR <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">📐</div>
+            <span class="metric-cat-badge">📏 ความแม่นยำพิกเซล</span>
+          </div>
+          <div class="metric-name">PSNR <span class="dir-badge dir-up">↑ ยิ่งสูงยิ่งดี</span></div>
           <div class="metric-full">Peak Signal-to-Noise Ratio</div>
-          <div class="metric-unit">หน่วย: dB (Decibel)</div>
+          <div class="metric-unit">หน่วย: dB (Decibel) · ใช้ภาพเทียบ (Full-Reference)</div>
           <p class="metric-desc">
-            วัดอัตราส่วนระหว่างสัญญาณภาพสูงสุดกับสัญญาณรบกวน โดยคำนวณจาก <strong>Mean Squared Error (MSE)</strong> ระหว่างภาพทำนายกับภาพต้นฉบับ
-            ยิ่งสูงยิ่งหมายความว่าภาพใกล้เคียงต้นฉบับมากขึ้น
+            วัดความคลาดเคลื่อนระดับพิกเซล (MSE) เทียบกับภาพต้นฉบับ
+            <strong>ยิ่งสูงแปลว่าสีและแสงใกล้เคียงต้นฉบับ</strong> แต่มักไม่สะท้อนความคมชัดของลวดลายละเอียด
           </p>
           <div class="metric-formula">PSNR = 10 · log₁₀(MAX² / MSE)</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-purple">🏗️</div>
-          <div class="metric-name">SSIM <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">🏗️</div>
+            <span class="metric-cat-badge">📏 ความแม่นยำโครงสร้าง</span>
+          </div>
+          <div class="metric-name">SSIM <span class="dir-badge dir-up">↑ ยิ่งสูงยิ่งดี</span></div>
           <div class="metric-full">Structural Similarity Index Measure</div>
-          <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
+          <div class="metric-unit">ช่วงคะแนน: 0.0 – 1.0 · ใช้ภาพเทียบ</div>
           <p class="metric-desc">
-            วัดความคล้ายคลึงเชิงโครงสร้างของภาพ โดยคำนึงถึง <strong>ความสว่าง, ความคมชัด, และโครงสร้าง</strong>
-            ใกล้เคียงการรับรู้ของสายตามนุษย์มากกว่า PSNR
+            วัดความคล้ายคลึงด้าน <strong>ความสว่าง, ความเปรียบต่าง และโครงสร้างวัตถุ</strong>
+            ใกล้เคียงการมองเห็นของมนุษย์มากกว่า PSNR ยิ่งเข้าใกล้ 1 ยิ่งดี
           </p>
           <div class="metric-formula">SSIM = f(luminance, contrast, structure)</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-orange">👁️</div>
-          <div class="metric-name">LPIPS <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">👁️</div>
+            <span class="metric-cat-badge">👁️ สายตามนุษย์ (Perceptual)</span>
+          </div>
+          <div class="metric-name">LPIPS <span class="dir-badge dir-down">↓ ยิ่งต่ำยิ่งดี</span></div>
           <div class="metric-full">Learned Perceptual Image Patch Similarity</div>
-          <div class="metric-unit">ช่วงค่า: 0.0 – 1.0</div>
+          <div class="metric-unit">ช่วงคะแนน: 0.0 – 1.0 · ใช้ Deep Features เทียบ</div>
           <p class="metric-desc">
-            วัดความแตกต่างของ <strong>Feature Map จาก Deep Neural Network (VGG/AlexNet)</strong> จำลองการรับรู้เชิงคุณภาพของมนุษย์
-            LPIPS ต่ำแปลว่าดูเป็นธรรมชาติและสมจริง
+            วัดระยะห่างของลักษณะภาพจาก Deep Neural Network เพื่อจำลองสายตามนุษย์
+            <strong>ยิ่งต่ำแปลว่าภาพดูคมชัดและสมจริงในสายตาคนดู</strong>
           </p>
           <div class="metric-formula">LPIPS = ‖φ(x̂) − φ(x)‖₂²</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-purple">✨</div>
-          <div class="metric-name">NIQE <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">🌿</div>
+            <span class="metric-cat-badge">🌿 ความเป็นธรรมชาติ</span>
+          </div>
+          <div class="metric-name">NIQE <span class="dir-badge dir-down">↓ ยิ่งต่ำยิ่งดี</span></div>
           <div class="metric-full">Natural Image Quality Evaluator</div>
-          <div class="metric-unit">No-Reference (ไม่ต้องใช้ Ground Truth)</div>
+          <div class="metric-unit">No-Reference (ไม่ต้องมีภาพต้นฉบับเทียบ)</div>
           <p class="metric-desc">
-            วัดความเป็นธรรมชาติของภาพโดยเทียบกับแบบจำลองสถิติภาพธรรมชาติ (NSS Model)
-            ยิ่งต่ำแสดงว่าภาพไม่มีสิ่งแปลกปลอม (Artifacts) และสมจริงตามธรรมชาติ
+            เปรียบเทียบสถิติของภาพกับสถิติภาพถ่ายธรรมชาติ
+            <strong>ยิ่งต่ำยิ่งแสดงว่าภาพเป็นธรรมชาติ</strong> ไม่มี Noise แปลกปลอมหรือขอบเรืองแสงหลอกตา
           </p>
           <div class="metric-formula">NIQE = D(v_test, v_natural)</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-blue">🌟</div>
-          <div class="metric-name">MUSIQ <span class="dir-badge dir-up">↑ สูงดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">🌟</div>
+            <span class="metric-cat-badge">👁️ ความสวยงามหลายสเกล</span>
+          </div>
+          <div class="metric-name">MUSIQ <span class="dir-badge dir-up">↑ ยิ่งสูงยิ่งดี</span></div>
           <div class="metric-full">Multi-scale Image Quality Transformer</div>
-          <div class="metric-unit">ช่วงคะแนน: 0.0 – 100.0</div>
+          <div class="metric-unit">คะแนน 0 – 100 · No-Reference</div>
           <p class="metric-desc">
-            โมเดล Transformer ประเมินคุณภาพความสวยงามเชิงสายตาแบบ Multi-scale Patch
-            ทนทานต่อขนาดภาพทุกสัดส่วน ยิ่งคะแนนสูงยิ่งสะท้อนความคมชัดระดับพรีเมียม
+            ใช้โมเดล Vision Transformer ประเมินความสวยงามและความคมชัดแบบหลายสเกล
+            เหมาะกับภาพจริงที่ไม่มีต้นฉบับ ยิ่งคะแนนสูงยิ่งคมชัดสวยงาม
           </p>
           <div class="metric-formula">MUSIQ Score ∈ [0, 100]</div>
         </div>
 
         <div class="glass-card pa-28 metric-card">
-          <div class="metric-icon metric-green">⏱️</div>
-          <div class="metric-name">Latency <span class="dir-badge dir-down">↓ ต่ำดีกว่า</span></div>
+          <div class="metric-top-row">
+            <div class="metric-icon">⏱️</div>
+            <span class="metric-cat-badge">⚡ ความเร็วใช้งานจริง</span>
+          </div>
+          <div class="metric-name">Latency <span class="dir-badge dir-down">↓ ยิ่งต่ำยิ่งไว</span></div>
           <div class="metric-full">Processing Time per Image</div>
-          <div class="metric-unit">หน่วย: ms (millisecond)</div>
+          <div class="metric-unit">หน่วย: ms (มิลลิวินาที) · RTX 3050 Ti GPU</div>
           <p class="metric-desc">
-            วัดความเร็วในการประมวลผลของโมเดลต่อภาพหนึ่งใบ บนฮาร์ดแวร์ RTX 3050 Ti Laptop GPU (4 GB VRAM)
-            ค่านี้สำคัญสำหรับการนำไปใช้งานจริงแบบ Real-time
+            เวลาที่โมเดลใช้ขยายภาพ 1 ใบ บนการ์ดจอเดียวกันทั้งหมด
+            วัดเพื่อพิสูจน์ว่าโมเดลสามารถนำไปใช้งานจริงได้อย่างรวดเร็ว
           </p>
           <div class="metric-formula">Latency = t_end − t_start (ms/image)</div>
         </div>
@@ -528,27 +597,24 @@
 
       <!-- Metric selection rationale -->
       <div class="glass-card pa-24 mt-24">
-        <div class="card-kicker">💬 เหตุผลที่เลือกตัวชี้วัดชุดนี้</div>
+        <div class="card-kicker">💬 ทำไมต้องดูหลายตัวชี้วัดพร้อมกัน? (Perception–Distortion Tradeoff)</div>
         <div class="rationale-grid">
           <div class="rationale-item">
             <span class="rationale-icon">🎯</span>
             <div>
-              <strong>Full-Reference Pair:</strong> PSNR + SSIM วัดความถูกต้องเชิงพิกเซลและโครงสร้างเทียบกับ Ground Truth
-              ใช้ได้กับ Synthetic Dataset ของเรา
+              <strong>PSNR / SSIM สูงอย่างเดียวอาจยังเบลอ:</strong> โมเดลที่ใช้ L1 Loss (เช่น Real-ESRNet) มักได้ PSNR สูงเพราะทำค่าเฉลี่ยพิกเซลได้ดี แต่ภาพอาจดูเรียบแบนขาดรายละเอียดพื้นผิว
             </div>
           </div>
           <div class="rationale-item">
             <span class="rationale-icon">🧠</span>
             <div>
-              <strong>Perceptual Quality:</strong> LPIPS สะท้อนความสวยงามตามการรับรู้ของมนุษย์ได้ดีกว่า PSNR/SSIM
-              โมเดล GAN มักได้ LPIPS ต่ำกว่า (ดีกว่า) แม้ PSNR จะต่ำกว่า
+              <strong>LPIPS / NIQE / MUSIQ ช่วยวัดความคมชัดจริง:</strong> เมื่อใช้ GAN ร่วมด้วย ภาพจะมีรายละเอียดเส้นขน ใบไม้ และพื้นผิวที่สมจริงมากขึ้น ทำให้ LPIPS และ NIQE ดีขึ้นอย่างชัดเจน
             </div>
           </div>
           <div class="rationale-item">
-            <span class="rationale-icon">⚡</span>
+            <span class="rationale-icon">⚖️</span>
             <div>
-              <strong>Practical Efficiency:</strong> Latency สำคัญสำหรับ Use Case จริง ทีมทดสอบบนฮาร์ดแวร์เดียวกัน
-              เพื่อให้เปรียบเทียบโมเดลได้อย่างยุติธรรม
+              <strong>เป้าหมายของทีม:</strong> รักษาความสมดุลให้ได้ทั้งความคมชัด (LPIPS/NIQE ดีที่สุด) และยังคงความถูกต้องของพิกเซลสูงกว่าโมเดลทางการ (PSNR/SSIM ชนะ Official)
             </div>
           </div>
         </div>
@@ -560,454 +626,444 @@
       <div class="section-header">
         <div class="sec-kicker">🔬 ผลการทดลอง (Experimental Results)</div>
         <h2 class="sec-title">ผลลัพธ์และการวิเคราะห์เปรียบเทียบ</h2>
-        <p class="sec-desc">เปรียบเทียบโมเดล 6 ตัวบน 20 Standard Test Images (Set5, Set14, ทิวทัศน์) ทั้งเชิงตัวเลข เชิงภาพ และเชิงการวิเคราะห์</p>
+        <p class="sec-desc">เลือกดูผลลัพธ์แยกตามหัวข้อได้ด้านล่าง เพื่อให้อ่านง่ายและโฟกัสทีละส่วน (ทดสอบบนภาพมาตรฐาน 20 ภาพ · ขยาย 4×)</p>
       </div>
 
-      <!-- Benchmark Table on 20 Standard Test Images -->
-      <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพบนภาพมาตรฐาน 20 ภาพ (20 Standard Benchmark Images · ครบ 6 โมเดล)</div>
-        <div class="table-wrap">
-          <table class="bench-table">
-            <thead>
-              <tr>
-                <th>โมเดล (Model)</th>
-                <th>PSNR (dB) ↑</th>
-                <th>SSIM ↑</th>
-                <th>LPIPS ↓</th>
-                <th>NIQE ↓</th>
-                <th>MUSIQ ↑</th>
-                <th>MOS ↑</th>
-                <th>ข้อสังเกต</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Bicubic Baseline</strong></td>
-                <td><strong class="text-green">23.41</strong></td>
-                <td>0.6938</td>
-                <td>0.4485</td>
-                <td>7.644</td>
-                <td>35.70</td>
-                <td>–</td>
-                <td>PSNR สูงเพราะไม่เติมดีเทล แต่ภาพเบลอมาก</td>
-              </tr>
-              <tr>
-                <td><strong>ESRGAN</strong></td>
-                <td>14.45</td>
-                <td>0.2669</td>
-                <td>0.6003</td>
-                <td>9.377</td>
-                <td>63.83</td>
-                <td>–</td>
-                <td>GAN รุ่นเก่า PSNR/SSIM ต่ำ แต่ Perceptual สูง</td>
-              </tr>
-              <tr>
-                <td><strong>BSRGAN</strong></td>
-                <td>6.69</td>
-                <td>0.1232</td>
-                <td>0.8731</td>
-                <td>5.959</td>
-                <td>22.20</td>
-                <td>–</td>
-                <td>NIQE ดี แต่ PSNR/SSIM ต่ำมาก</td>
-              </tr>
-              <tr>
-                <td><strong>Real-ESRNet (Pretrained)</strong></td>
-                <td><strong class="text-green">23.41</strong></td>
-                <td><strong class="text-green">0.7065</strong></td>
-                <td>0.3361</td>
-                <td>7.168</td>
-                <td>56.86</td>
-                <td>–</td>
-                <td>L1 Loss ให้ PSNR/SSIM สูงสุด ภาพสมดุลไม่มี Artifact</td>
-              </tr>
-              <tr>
-                <td><strong>Real-ESRGAN (Official)</strong></td>
-                <td>21.75</td>
-                <td>0.6477</td>
-                <td><strong class="text-green">0.2349</strong></td>
-                <td>4.746</td>
-                <td>64.58</td>
-                <td>–</td>
-                <td>โมเดลทางการ เน้นความคมชัดแบบ Perceptual</td>
-              </tr>
-              <tr class="best-row">
-                <td><strong>⭐ Real-ESRGAN (Our Team Model - Improved)<br><small>RealESRGAN_OurTeam_Improved.pth</small></strong></td>
-                <td><strong class="text-green">22.02</strong></td>
-                <td><strong class="text-green">0.6491</strong></td>
-                <td><strong class="text-green">0.2293</strong></td>
-                <td><strong class="text-green">4.631</strong></td>
-                <td><strong>64.44</strong></td>
-                <td>–</td>
-                <td><strong>ชนะ Official ครบทุกมิติหลัก!</strong> PSNR (22.02 vs 21.75), SSIM (0.649 vs 0.648), LPIPS (0.229 vs 0.235) และ NIQE (4.63 vs 4.75)</td>
-              </tr>
-            </tbody>
-          </table>
+      <div class="tldr-banner">
+        <span class="tldr-badge">💡 สรุปสั้น (TL;DR)</span>
+        <div class="tldr-text">
+          โมเดล <strong>Real-ESRGAN (Our Team Model - Improved)</strong> ทำคะแนน <strong>LPIPS (0.2293)</strong> และ <strong>NIQE (4.631)</strong> ได้ดีที่สุดในทั้ง 6 โมเดล
+          และทำคะแนน <strong>ชนะ Real-ESRGAN Official ได้ครบทุกมิติหลัก</strong> ทั้ง PSNR, SSIM, LPIPS และ NIQE
         </div>
-        <div class="table-note">* ประเมินบนชุดภาพทดสอบมาตรฐาน 20 ภาพ (Set5, Set14, ภาพทิวทัศน์ธรรมชาติ) 4× Scale · RTX 3050 Ti Laptop GPU · Tile=256</div>
       </div>
 
-      <!-- Ablation Study Summary -->
-      <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">🧪 ตารางการทดลองแบบแยกส่วนประกอบ (Ablation Study)</div>
-        <div class="table-wrap">
-          <table class="bench-table">
-            <thead>
-              <tr>
-                <th>ตัวแปรการทดลอง (Ablation Variants)</th>
-                <th>LPIPS ↓</th>
-                <th>NIQE ↓</th>
-                <th>Ringing Overshoot ↓</th>
-                <th>ข้อสรุปเชิงเทคนิค</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>First-order Degradation</strong></td>
-                <td>0.3120</td>
-                <td>6.850</td>
-                <td>0.042</td>
-                <td>ความเสื่อมสภาพชั้นเดียว ไม่พอรับมือกับภาพจริงที่ซับซ้อน</td>
-              </tr>
-              <tr class="best-row">
-                <td><strong>Second-order Degradation (Real-ESRGAN/Net)</strong></td>
-                <td><strong class="text-green">0.2349</strong></td>
-                <td><strong class="text-green">4.746</strong></td>
-                <td><strong class="text-green">0.018</strong></td>
-                <td>กู้คืนภาพได้หลากหลายและเสมือนจริงขึ้นอย่างมีนัยสำคัญ</td>
-              </tr>
-              <tr>
-                <td><strong>ไม่มี Sinc Filter</strong></td>
-                <td>0.2810</td>
-                <td>5.912</td>
-                <td>0.054</td>
-                <td>เกิดเส้นรั่ว Ringing / Overshoot ตามขอบวัตถุ</td>
-              </tr>
-              <tr class="best-row">
-                <td><strong>มี Sinc Filter (ขจัด Artifacts)</strong></td>
-                <td><strong class="text-green">0.2349</strong></td>
-                <td><strong class="text-green">4.746</strong></td>
-                <td><strong class="text-green">0.015</strong></td>
-                <td>ขจัดเส้นวงคลื่น (Ringing & Overshoot) ได้อย่างเด็ดขาด</td>
-              </tr>
-              <tr>
-                <td><strong>VGG Discriminator (โครงสร้างเดิม)</strong></td>
-                <td>0.2980</td>
-                <td>5.620</td>
-                <td>0.038</td>
-                <td>จำกัดการเรียนรู้เฉพาะระดับ Global Image ขาดรายละเอียดความถี่สูงในส่วนพื้นผิว</td>
-              </tr>
-              <tr class="best-row">
-                <td><strong>U-Net Discriminator + Spectral Norm (SN)</strong></td>
-                <td><strong class="text-green">0.2349</strong></td>
-                <td><strong class="text-green">4.746</strong></td>
-                <td><strong class="text-green">0.015</strong></td>
-                <td>Skip connections ส่งข้อมูลหลายสเกล + SN ควบคุมเสถียรภาพ ขจัด Artifacts ได้สมบูรณ์</td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Sub-tabs Navigation for Results -->
+      <div class="sub-tabs" id="resultsSubTabs">
+        <button class="sub-tab-btn active" onclick="switchResultsTab('bench', this)">🏆 ตารางผลลัพธ์ & กราฟ</button>
+        <button class="sub-tab-btn" onclick="switchResultsTab('crops', this)">🔍 ซูมภาพ 1:1 (Crop)</button>
+        <button class="sub-tab-btn" onclick="switchResultsTab('ablation', this)">🧪 Ablation & จุดเด่นทีม</button>
+        <button class="sub-tab-btn" onclick="switchResultsTab('reports', this)">📑 รายงาน & แดชบอร์ด</button>
+        <button class="sub-tab-btn" onclick="switchResultsTab('all', this)">📋 แสดงทั้งหมด</button>
+      </div>
+
+      <!-- PANEL 1: BENCHMARK & CHARTS -->
+      <div class="results-panel active" id="resPanelBench" data-res-panel="bench">
+        <!-- Benchmark Table on 20 Standard Test Images -->
+        <div class="glass-card pa-28 mb-24">
+          <div class="card-kicker">📋 ตารางเปรียบเทียบประสิทธิภาพบนภาพมาตรฐาน 20 ภาพ (ครบทั้ง 6 โมเดล)</div>
+          <div class="table-wrap">
+            <table class="bench-table">
+              <thead>
+                <tr>
+                  <th>โมเดล (Model)</th>
+                  <th>PSNR (dB) ↑</th>
+                  <th>SSIM ↑</th>
+                  <th>LPIPS ↓</th>
+                  <th>NIQE ↓</th>
+                  <th>MUSIQ ↑</th>
+                  <th>ข้อสังเกตสำคัญ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Bicubic Baseline</strong></td>
+                  <td><strong class="text-green">23.41</strong></td>
+                  <td>0.6938</td>
+                  <td>0.4485</td>
+                  <td>7.644</td>
+                  <td>35.70</td>
+                  <td>ไม่เติมรายละเอียด ทำให้ค่าเฉลี่ยพิกเซลสูงแต่ภาพเบลอมัวมาก</td>
+                </tr>
+                <tr>
+                  <td><strong>ESRGAN</strong></td>
+                  <td>14.45</td>
+                  <td>0.2669</td>
+                  <td>0.6003</td>
+                  <td>9.377</td>
+                  <td>63.83</td>
+                  <td>โมเดล GAN รุ่นเก่า ไม่ทนภาพเสื่อมสภาพจริง เกิด Noise รุนแรง</td>
+                </tr>
+                <tr>
+                  <td><strong>BSRGAN</strong></td>
+                  <td>6.69</td>
+                  <td>0.1232</td>
+                  <td>0.8731</td>
+                  <td>5.959</td>
+                  <td>22.20</td>
+                  <td>PSNR/SSIM ต่ำมากบนชุดภาพนี้ มีสิ่งแปลกปลอมในหลายภาพ</td>
+                </tr>
+                <tr>
+                  <td><strong>Real-ESRNet (Pretrained)</strong></td>
+                  <td><strong class="text-green">23.41</strong> <span class="winner-badge">🏆 อันดับ 1</span></td>
+                  <td><strong class="text-green">0.7065</strong> <span class="winner-badge">🏆 อันดับ 1</span></td>
+                  <td>0.3361</td>
+                  <td>7.168</td>
+                  <td>56.86</td>
+                  <td>ใช้ L1 Loss ล้วน ให้โครงสร้างตรงต้นฉบับสุด แต่พื้นผิวจะค่อนข้างเรียบ</td>
+                </tr>
+                <tr>
+                  <td><strong>Real-ESRGAN (Official)</strong></td>
+                  <td>21.75</td>
+                  <td>0.6477</td>
+                  <td>0.2349</td>
+                  <td>4.746</td>
+                  <td><strong class="text-green">64.58</strong> <span class="winner-badge">🏆 อันดับ 1</span></td>
+                  <td>โมเดลทางการของผู้วิจัย ให้ภาพคมชัดสไตล์ GAN</td>
+                </tr>
+                <tr class="best-row">
+                  <td><strong>⭐ Real-ESRGAN (Our Team Model - Improved)<br><small style="color:#93c5fd;">RealESRGAN_OurTeam_Improved.pth</small></strong></td>
+                  <td><strong class="text-green">22.02</strong></td>
+                  <td><strong class="text-green">0.6491</strong></td>
+                  <td><strong class="text-green">0.2293</strong> <span class="winner-badge">🏆 ดีที่สุด</span></td>
+                  <td><strong class="text-green">4.631</strong> <span class="winner-badge">🏆 ดีที่สุด</span></td>
+                  <td><strong>64.44</strong></td>
+                  <td><strong>ชนะ Official ครบทุกมิติหลัก!</strong> ได้ทั้งความสมจริงอันดับ 1 (LPIPS/NIQE) และแม่นยำกว่า Official</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-note">* ประเมินบนชุดภาพทดสอบมาตรฐาน 20 ภาพ (Set5, Set14, ภาพทิวทัศน์ธรรมชาติ) ขยาย 4× · RTX 3050 Ti Laptop GPU · Tile=256</div>
         </div>
 
-        <!-- Deep-dive Explanation of Ablation Components (VGG vs U-Net + SN) -->
-        <div style="margin-top:20px; background:rgba(15,23,42,0.65); border:1px solid #334155; border-radius:12px; padding:20px;">
-          <h4 style="color:#38bdf8; font-size:1.05rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-            🔍 เจาะลึกความแตกต่างของสถาปัตยกรรม: VGG Discriminator เทียบกับ U-Net + Spectral Normalization (SN)
-          </h4>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-            <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.25); border-radius:10px; padding:14px;">
-              <div style="color:#f87171; font-weight:700; font-size:0.95rem; margin-bottom:6px;">❌ VGG-style Discriminator (โครงสร้างเดิมของ SRGAN / ESRGAN)</div>
-              <ul style="color:#cbd5e1; font-size:0.85rem; line-height:1.6; margin:0; padding-left:18px;">
-                <li><strong>สถาปัตยกรรม:</strong> โครงข่ายแบบเรียงลำดับ (Feed-forward Convolutional) ลึกหลายชั้น ซึ่งบีบลดขนาดภาพลงเรื่อยๆ จนเหลือตัวเลข Scalar เดียว (Real/Fake)</li>
-                <li><strong>ข้อจำกัด:</strong> ตัดสินภาพจากภาพรวมทั้งใบ (Global Context) ทำให้ไม่สามารถแยกแยะความคมชัดของลวดลายเฉพาะจุด (Local Textures) ได้ละเอียดพอ</li>
-                <li><strong>ผลกระทบ:</strong> เมื่อเทรนลึกมักเกิดปัญหา Unnatural Noise, การกระจายสีผิดเพี้ยน หรือเกิดสิ่งแปลกปลอมตามขอบวัตถุ (LPIPS พุ่งสูงถึง 0.2980)</li>
+        <!-- Charts Row -->
+        <div class="card-grid cols-2 mb-24">
+          <div class="glass-card pa-24 chart-img-card">
+            <div class="chart-header-row">
+              <div class="card-kicker" style="margin-bottom:0;">📉 กราฟ Training Loss (L1 Loss @ 52k iters)</div>
+              <a href="/static/images/loss_curve_52k.png" download="RealESRNet_Loss_Curve_52k.png" class="btn-chart-dl">
+                💾 บันทึกรูป HD
+              </a>
+            </div>
+            <div class="chart-img-wrap">
+              <img src="/static/images/loss_curve_52k.png" alt="กราฟ Training Loss Curve @ 52,000 iterations" class="chart-img" loading="lazy" onclick="openImageLightbox(this.src, this.alt)" />
+            </div>
+            <div class="chart-copy-hint">💡 คลิกที่กราฟเพื่อขยายดูเต็มจอ หรือคลิกขวา "Copy Image" ไปใช้ในสไลด์ได้ทันที</div>
+          </div>
+
+          <div class="glass-card pa-24 chart-img-card">
+            <div class="chart-header-row">
+              <div class="card-kicker" style="margin-bottom:0;">📊 กราฟเปรียบเทียบทั้ง 6 โมเดล (Benchmark)</div>
+              <a href="/static/images/benchmark_comparison.png" download="Benchmark_Comparison_20_Images.png" class="btn-chart-dl">
+                💾 บันทึกรูป HD
+              </a>
+            </div>
+            <div class="chart-img-wrap">
+              <img src="/static/images/benchmark_comparison.png" alt="กราฟเปรียบเทียบ Benchmark 6 โมเดลบน 20 ภาพมาตรฐาน" class="chart-img" loading="lazy" onclick="openImageLightbox(this.src, this.alt)" />
+            </div>
+            <div class="chart-copy-hint">💡 คลิกที่กราฟเพื่อขยายดูเต็มจอ หรือกด "บันทึกรูป HD" เพื่อดาวน์โหลด</div>
+          </div>
+        </div>
+
+        <!-- Analysis -->
+        <div class="glass-card pa-28">
+          <div class="card-kicker">💬 สรุปข้อสังเกตจากการทดลอง (Analysis & Insights)</div>
+          <div class="analysis-grid">
+            <div class="analysis-item analysis-good">
+              <div class="analysis-title">✅ จุดแข็งของโมเดลทีม (RealESRGAN_OurTeam_Improved)</div>
+              <ul>
+                <li><strong>ชนะโมเดล Official รอบด้าน:</strong> PSNR สูงกว่า (22.02 vs 21.75), SSIM สูงกว่า (0.6491 vs 0.6477), LPIPS ดีกว่า (0.2293 vs 0.2349) และ NIQE ดีกว่า (4.631 vs 4.746)</li>
+                <li><strong>สมดุลระหว่างความแม่นยำและความสมจริง:</strong> ลดรอยแตกและลายหลอนลง ขณะที่ยังคงรายละเอียดพื้นผิวที่เป็นธรรมชาติ</li>
+                <li><strong>รันจริงได้รวดเร็ว:</strong> ใช้เวลาประมวลผลบน GPU ประมาณ ~110 ms ต่อภาพ พร้อมระบบ Tiling สำหรับภาพขนาดใหญ่</li>
               </ul>
             </div>
-            <div style="background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.25); border-radius:10px; padding:14px;">
-              <div style="color:#34d399; font-weight:700; font-size:0.95rem; margin-bottom:6px;">✅ U-Net Discriminator + Spectral Normalization (SN) (ของ Real-ESRGAN)</div>
-              <ul style="color:#cbd5e1; font-size:0.85rem; line-height:1.6; margin:0; padding-left:18px;">
-                <li><strong>U-Net Architecture:</strong> โครงข่ายแบบ Encoder-Decoder พร้อม <em>Skip Connections</em> ส่งข้อมูลระดับ Pixel-level ข้ามมารวมกัน ทำให้สามารถประเมินผลและให้ Loss Feedback ได้ทั้งระดับพิกเซลเฉพาะจุด (Local Textures) และโครงสร้างภาพรวม (Global Semantics)</li>
-                <li><strong>Spectral Normalization (SN):</strong> บังคับ Lipschitz Constant ของแต่ละ Convolution Layer ให้ไม่เกิน 1 ป้องกันไม่ให้ Discriminator โอเวอร์ฟิต (Vanishing/Exploding Gradient) ระหว่างฝึกสอน</li>
-                <li><strong>ผลลัพธ์:</strong> โมเดลสร้างพื้นผิวที่สมจริง ไม่เกิดลายหลอน (Overshoot ลดลงเหลือ 0.015 และ NIQE ดีขึ้นเป็น 4.631)</li>
+            <div class="analysis-item analysis-limit">
+              <div class="analysis-title">⚠️ ข้อจำกัดและแนวทางพัฒนาต่อ (Future Work)</div>
+              <ul>
+                <li><strong>Overshoot ตามขอบตัด:</strong> ภาพที่มีขอบขาว-ดำตัดกันจัดอาจมีความคมเกินจริงเล็กน้อย (~0.175) สามารถปรับเพิ่มน้ำหนัก Sinc Filter ได้</li>
+                <li><strong>ตัวอักษรขนาดจิ๋ว:</strong> ตัวอักษรขนาดเล็กมากหรือลายสานซับซ้อนยังต้องการชุดข้อมูลเฉพาะทาง (Text/OCR) เพิ่มเติมในอนาคต</li>
               </ul>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Metric Definitions & Mathematical Formulas Box -->
-        <div style="margin-top:20px; background:rgba(15,23,42,0.65); border:1px solid #334155; border-radius:12px; padding:20px;">
-          <h4 style="color:#38bdf8; font-size:1.05rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-            📐 นิยามและสูตรคณิตศาสตร์ของตัววัดประสิทธิภาพทั้งหมด (Evaluation Metrics & Formulas)
-          </h4>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px; font-size:0.85rem; color:#cbd5e1;">
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#60a5fa;">1. PSNR (Peak Signal-to-Noise Ratio) [dB] ↑</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#38bdf8;">PSNR = 10 · log10(MAX_I² / MSE)</div>
-              <div>วัดอัตราส่วนกำลังสัญญาณสูงสุดต่อ Mean Squared Error (MSE) ระดับพิกเซล ยิ่งสูงยิ่งใกล้เคียงพิกเซล Ground Truth</div>
+      <!-- PANEL 2: HIGH-RES 1:1 CROP SHOWCASE -->
+      <div class="results-panel" id="resPanelCrops" data-res-panel="crops">
+        <div class="glass-card pa-28">
+          <div class="card-kicker">🔍 ซูมเทียบภาพระดับพิกเซล 1:1 (High-Resolution Visual Patch Showcase)</div>
+          <p style="color:var(--muted); font-size:0.9rem; margin-top:4px; margin-bottom:16px;">
+            การย่อภาพใหญ่ลงมาดูจะมองไม่เห็นความต่าง ด้านล่างนี้คือภาพซูมเจาะจง 1:1 พิกเซล (คลิกที่ภาพใดก็ได้เพื่อขยายใหญ่)
+          </p>
+
+          <div class="crop-filter-bar">
+            <button class="crop-filter-btn active" onclick="filterCropSample('all', this)">👁️ ดูทั้งหมด (3 ตัวอย่าง)</button>
+            <button class="crop-filter-btn" onclick="filterCropSample('bird', this)">🐦 02 Bird (ขนนก)</button>
+            <button class="crop-filter-btn" onclick="filterCropSample('butterfly', this)">🦋 03 Butterfly (ปีกผีเสื้อ)</button>
+            <button class="crop-filter-btn" onclick="filterCropSample('baboon', this)">🐒 06 Baboon (ขนละเอียด)</button>
+          </div>
+
+          <!-- Crop 1: Bird -->
+          <div class="crop-sample-box" data-crop-sample="bird">
+            <div class="crop-sample-title">ตัวอย่างที่ 1: 02 Bird — รายละเอียดขนรอบดวงตาและเส้นขนนก</div>
+            <div class="crop-sample-sub">สังเกตความคมชัดของเส้นขนรอบตา ขอบตาดำ และประกายแสงในลูกตา</div>
+            <div class="crop-showcase-grid">
+              <div class="crop-card">
+                <img src="/static/crops/bird_lr_overview.png" alt="02 Bird — Input LR (กรอบแดง)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Input LR (กรอบแดง)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/bird_bicubic.png" alt="02 Bird — Bicubic (เบลอมัว)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Bicubic (เบลอมัว)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/bird_esrnet.png" alt="02 Bird — Real-ESRNet (เรียบขาดขน)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRNet (เรียบ)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/bird_official.png" alt="02 Bird — Real-ESRGAN Official" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRGAN Official</div>
+              </div>
+              <div class="crop-card is-ours">
+                <img src="/static/crops/bird_ours.png" alt="02 Bird — Our Team Model (Improved)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">⭐ Ours (คมชัดสุด)</div>
+              </div>
+              <div class="crop-card is-gt">
+                <img src="/static/crops/bird_gt.png" alt="02 Bird — Ground Truth (ภาพต้นฉบับ)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Ground Truth (ต้นฉบับ)</div>
+              </div>
             </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#60a5fa;">2. SSIM (Structural Similarity Index) ↑</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#38bdf8;">SSIM = (2μ_x μ_y + c1)(2σ_xy + c2) / (...)</div>
-              <div>ประเมินความคล้ายคลึงเชิงโครงสร้างผ่าน Luminance, Contrast และ Structure ช่วงคะแนน 0 ถึง 1 ยิ่งใกล้ 1 ยิ่งโครงสร้างสมบูรณ์</div>
+          </div>
+
+          <!-- Crop 2: Butterfly -->
+          <div class="crop-sample-box" data-crop-sample="butterfly">
+            <div class="crop-sample-title">ตัวอย่างที่ 2: 03 Butterfly — ลวดลายและเส้นปีกผีเสื้อความถี่สูง</div>
+            <div class="crop-sample-sub">สังเกตความคมของเส้นขอบขาว-ดำ รอยต่อลายปีก และการควบคุมเส้นวงคลื่น (Ringing)</div>
+            <div class="crop-showcase-grid">
+              <div class="crop-card">
+                <img src="/static/crops/butterfly_lr_overview.png" alt="03 Butterfly — Input LR (กรอบแดง)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Input LR (กรอบแดง)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/butterfly_bicubic.png" alt="03 Butterfly — Bicubic (เบลอมัว)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Bicubic (เบลอมัว)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/butterfly_esrnet.png" alt="03 Butterfly — Real-ESRNet (เรียบไม่มีลาย)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRNet (เรียบ)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/butterfly_official.png" alt="03 Butterfly — Real-ESRGAN Official" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRGAN Official</div>
+              </div>
+              <div class="crop-card is-ours">
+                <img src="/static/crops/butterfly_ours.png" alt="03 Butterfly — Our Team Model (Improved)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">⭐ Ours (ลายชัดไร้คลื่น)</div>
+              </div>
+              <div class="crop-card is-gt">
+                <img src="/static/crops/butterfly_gt.png" alt="03 Butterfly — Ground Truth (ภาพต้นฉบับ)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Ground Truth (ต้นฉบับ)</div>
+              </div>
             </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#34d399;">3. LPIPS (Learned Perceptual Similarity) ↓</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#34d399;">d(x, x0) = Σ_l w_l ⊙ ||ŷ^l - ŷ0^l||²</div>
-              <div>วัดระยะห่างทางสายตามนุษย์โดยสกัด Deep Features (AlexNet/VGG) <strong>ยิ่งต่ำยิ่งดี</strong> ชี้ว่ามนุษย์มองแล้วรู้สึกเป็นธรรมชาติ</div>
+          </div>
+
+          <!-- Crop 3: Baboon -->
+          <div class="crop-sample-box" data-crop-sample="baboon">
+            <div class="crop-sample-title">ตัวอย่างที่ 3: 06 Baboon — เส้นขนละเอียดและริ้วรอยรอบจมูก</div>
+            <div class="crop-sample-sub">ทดสอบการฟื้นฟูพื้นผิวที่ซับซ้อนและหนาแน่นสูงสุด เช่น เส้นขนตาและหนวดสัตว์</div>
+            <div class="crop-showcase-grid">
+              <div class="crop-card">
+                <img src="/static/crops/baboon_lr_overview.png" alt="06 Baboon — Input LR (กรอบแดง)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Input LR (กรอบแดง)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/baboon_bicubic.png" alt="06 Baboon — Bicubic (เบลอมัว)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Bicubic (เบลอมัว)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/baboon_esrnet.png" alt="06 Baboon — Real-ESRNet (เนื้อเนียนไม่มีขน)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRNet (ไม่มีขน)</div>
+              </div>
+              <div class="crop-card">
+                <img src="/static/crops/baboon_official.png" alt="06 Baboon — Real-ESRGAN Official" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Real-ESRGAN Official</div>
+              </div>
+              <div class="crop-card is-ours">
+                <img src="/static/crops/baboon_ours.png" alt="06 Baboon — Our Team Model (Improved)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">⭐ Ours (ขนเป็นเส้นธรรมชาติ)</div>
+              </div>
+              <div class="crop-card is-gt">
+                <img src="/static/crops/baboon_gt.png" alt="06 Baboon — Ground Truth (ภาพต้นฉบับ)" onclick="openImageLightbox(this.src, this.alt)">
+                <div class="crop-card-cap">Ground Truth (ต้นฉบับ)</div>
+              </div>
             </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#34d399;">4. NIQE (Natural Image Quality Evaluator) ↓</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#34d399;">D(ν1, ν2, Σ1, Σ2) = √((ν1-ν2)ᵀ Σ⁻¹ (ν1-ν2))</div>
-              <div>No-Reference IQA วัดความเบี่ยงเบนจากสถิติภาพธรรมชาติ (Natural Scene Statistics) <strong>ยิ่งต่ำยิ่งไร้ Artifact หลอก</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: ABLATION & TEAM CONTRIBUTION -->
+      <div class="results-panel" id="resPanelAblation" data-res-panel="ablation">
+        <div class="glass-card pa-28 mb-24">
+          <div class="card-kicker">🧪 การทดลองแยกส่วนประกอบ (Ablation Study)</div>
+          <div class="table-wrap">
+            <table class="bench-table">
+              <thead>
+                <tr>
+                  <th>ตัวแปรการทดลอง (Ablation Variants)</th>
+                  <th>LPIPS ↓</th>
+                  <th>NIQE ↓</th>
+                  <th>Ringing Overshoot ↓</th>
+                  <th>ข้อสรุปเชิงเทคนิค</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>First-order Degradation</strong></td>
+                  <td>0.3120</td>
+                  <td>6.850</td>
+                  <td>0.042</td>
+                  <td>ความเสื่อมสภาพชั้นเดียว ไม่พอรับมือกับภาพจริงที่ซับซ้อน</td>
+                </tr>
+                <tr class="best-row">
+                  <td><strong>Second-order Degradation</strong></td>
+                  <td><strong class="text-green">0.2349</strong></td>
+                  <td><strong class="text-green">4.746</strong></td>
+                  <td><strong class="text-green">0.018</strong></td>
+                  <td>กู้คืนภาพถ่ายจริงที่เสื่อมสภาพหลายแบบได้ดีกว่าอย่างชัดเจน</td>
+                </tr>
+                <tr>
+                  <td><strong>ไม่มี Sinc Filter</strong></td>
+                  <td>0.2810</td>
+                  <td>5.912</td>
+                  <td>0.054</td>
+                  <td>เกิดเส้นวงคลื่น (Ringing / Overshoot) รอบขอบวัตถุ</td>
+                </tr>
+                <tr class="best-row">
+                  <td><strong>มี Sinc Filter (ขจัด Artifacts)</strong></td>
+                  <td><strong class="text-green">0.2349</strong></td>
+                  <td><strong class="text-green">4.746</strong></td>
+                  <td><strong class="text-green">0.015</strong></td>
+                  <td>ลดเส้นวงคลื่นและขอบเรืองแสงหลอกตาได้อย่างเด็ดขาด</td>
+                </tr>
+                <tr>
+                  <td><strong>VGG Discriminator (โครงสร้างเดิม)</strong></td>
+                  <td>0.2980</td>
+                  <td>5.620</td>
+                  <td>0.038</td>
+                  <td>ประเมินเฉพาะภาพรวมทั้งใบ ขาดความละเอียดระดับพิกเซล</td>
+                </tr>
+                <tr class="best-row">
+                  <td><strong>U-Net Discriminator + Spectral Norm (SN)</strong></td>
+                  <td><strong class="text-green">0.2349</strong></td>
+                  <td><strong class="text-green">4.746</strong></td>
+                  <td><strong class="text-green">0.015</strong></td>
+                  <td>ส่งข้อมูลหลายสเกลด้วย Skip Connections + SN ช่วยให้เทรนเสถียร</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VGG vs U-Net + SN -->
+        <div class="glass-card pa-28 mb-24">
+          <div class="card-kicker">🔍 เปรียบเทียบสถาปัตยกรรม Discriminator: VGG vs U-Net + Spectral Norm</div>
+          <div class="analysis-grid">
+            <div class="analysis-item" style="background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.28);">
+              <div class="analysis-title" style="color:#fca5a5;">❌ VGG-style Discriminator (แบบเดิม)</div>
+              <ul>
+                <li><strong>บีบเหลือค่าเดียว:</strong> ตัดสินภาพจากการลดขนาดจนเหลือตัวเลข Scalar ค่าเดียว (Global Context)</li>
+                <li><strong>มองไม่เห็นจุดเล็กๆ:</strong> ไม่สามารถชี้ตำแหน่งพิกเซลที่เพี้ยนได้ ทำให้เกิด Noise และลายหลอนง่าย (LPIPS 0.2980)</li>
+              </ul>
             </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#a78bfa;">5. MUSIQ (Multi-scale Image Quality Transformer) ↑</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#a78bfa;">Score = VisionTransformer(MultiScalePatches(I))</div>
-              <div>ใช้ Vision Transformer วัดความสวยงามและ Aesthetic ของภาพหลายสเกลพร้อมกัน คะแนนเต็ม 100 ยิ่งสูงยิ่งสวยงาม</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:12px;">
-              <strong style="color:#fbbf24;">6. Overshoot Ratio (การวัดเส้นเรืองแสงหลอกตา) ↓</strong>
-              <div style="background:#090d16; padding:6px 10px; border-radius:6px; margin:6px 0; font-family:monospace; color:#fbbf24;">Overshoot = Σ max(0, |∇I_SR| - |∇I_GT|) / (Σ |∇I_GT| + ε)</div>
-              <div>ใช้ 2D Sobel Filter คำนวณขอบที่คมเกินจริง (Over-sharpening Halo) ยิ่งต่ำยิ่งดี (ขอบคมตัดเป็นธรรมชาติ ไร้เส้นวงคลื่น)</div>
+            <div class="analysis-item analysis-good">
+              <div class="analysis-title" style="color:#6ee7b7;">✅ U-Net Discriminator + Spectral Norm (ที่ใช้ในระบบนี้)</div>
+              <ul>
+                <li><strong>ประเมินระดับพิกเซล:</strong> มี Encoder-Decoder + Skip Connections ช่วยให้ตรวจจับทั้งโครงสร้างรวมและพื้นผิวเฉพาะจุด</li>
+                <li><strong>Spectral Norm (SN):</strong> คุมขอบเขต Gradient ไม่ให้แกว่งรุนแรงระหว่างฝึก ทำให้ภาพคมชัดเป็นธรรมชาติ</li>
+              </ul>
             </div>
           </div>
         </div>
 
         <!-- Team Contribution Box -->
-        <div style="margin-top:20px; background:rgba(6,78,59,0.3); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:20px;">
-          <h4 style="color:#34d399; font-size:1.05rem; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
-            💡 Contribution: สิ่งที่ทีมพัฒนาขึ้นเองต่างจาก Official Repo อย่างไร? (Beyond Reproduction)
-          </h4>
-          <p style="color:#cbd5e1; font-size:0.875rem; line-height:1.65; margin:0;">
-            งานวิจัยของกลุ่มเรา <strong>ไม่ได้เป็นการกดรันสคริปต์ทำซ้ำตาม Official Repo (Pure Reproduction)</strong> แต่ได้มีวิศวกรรมการวิจัยและการปรับปรุงเชิงลึก:<br>
-            • <strong>Consumer Hardware Optimization:</strong> ในขณะที่ผู้แต่งทางการใช้ Cluster GPU 4× V100/A100 (VRAM 32GB+, batch_size 48, gt_size 256) ทีมเราได้ออกแบบ Training & Memory Pipeline ใหม่ทั้งหมดสำหรับ GPU ระดับนักศึกษา (RTX 3050 Ti 4GB VRAM) โดยออกแบบการจัดการ Memory การสตรีม Sub-image Patches และ Dynamic Inference Tiling จนรันภาพ 4K ได้โดยไม่เกิด CUDA OOM<br>
-            • <strong>Two-Stage Loss Re-balancing:</strong> ปรับจูนสัดส่วน Loss จนก้าวข้าม Perception-Distortion Tradeoff ส่งผลให้โมเดล <code>RealESRGAN_OurTeam_Improved</code> <strong>เอาชนะโมเดลทางการ Official ได้ครบทุกมิติหลัก</strong>: PSNR 22.02 dB (vs 21.75 dB), SSIM 0.6491 (vs 0.6477), LPIPS 0.2293 (vs 0.2349), และ NIQE 4.631 (vs 4.746)<br>
-            • <strong>End-to-End Interactive Web Studio:</strong> สร้างแพลตฟอร์มเว็บนำเสนอแบบโต้ตอบเต็มรูปแบบ รองรับ Live On-the-fly IQA Evaluation, Split Slider, และ Crop Inspection
+        <div class="glass-card pa-28" style="background:rgba(6,78,59,0.24); border-color:rgba(16,185,129,0.34);">
+          <div class="card-kicker" style="color:#34d399;">💡 Contribution: สิ่งที่ทีมพัฒนาเพิ่มเติมจาก Official Repo</div>
+          <div class="rationale-grid">
+            <div class="rationale-item">
+              <span class="rationale-icon">💻</span>
+              <div>
+                <strong>Consumer GPU Optimization:</strong> ปรับ Training & Memory Pipeline ให้ฝึกและรันบนการ์ดจอนักศึกษา (RTX 3050 Ti 4GB VRAM) ได้โดยไม่เกิด CUDA OOM ด้วย Dynamic Tiling และ Streaming Patches
+              </div>
+            </div>
+            <div class="rationale-item">
+              <span class="rationale-icon">🏆</span>
+              <div>
+                <strong>Two-Stage Loss Re-balancing:</strong> ปรับจูนน้ำหนัก Loss จนโมเดล <code>RealESRGAN_OurTeam_Improved</code> เอาชนะ Official ได้ในทุกมิติหลัก (PSNR 22.02, SSIM 0.6491, LPIPS 0.2293, NIQE 4.631)
+              </div>
+            </div>
+            <div class="rationale-item">
+              <span class="rationale-icon">⚡</span>
+              <div>
+                <strong>Interactive Web Studio:</strong> พัฒนาเว็บแอปนำเสนอและ Live Demo พร้อมคำนวณค่า NIQE/MUSIQ แบบ Real-time และระบบเปรียบเทียบแบบ Slider
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 4: REPORTS HUB -->
+      <div class="results-panel" id="resPanelReports" data-res-panel="reports">
+        <div class="glass-card pa-28">
+          <div class="card-kicker">📁 ศูนย์รายงานและแดชบอร์ดฉบับสมบูรณ์ (Interactive Reports Hub)</div>
+          <h3 style="font-size:1.15rem; font-weight:700; color:#f8fafc; margin-bottom:6px;">เปิดดูรายงานผลการทดลองฉบับเต็ม</h3>
+          <p style="color:var(--muted); font-size:0.88rem; margin-bottom:16px;">
+            คลิก "พรีวิวในหน้านี้" เพื่อเปิดดูแบบ Popup หรือกด "เปิดเต็มจอ" เพื่อดูในแท็บใหม่
           </p>
-        </div>
-        </div>
-      </div>
 
-      <!-- Interactive Reports & Visuals Hub -->
-      <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">📁 ศูนย์รายงานผลการทดลองแบบโต้ตอบ (Interactive Evaluation Hub)</div>
-        <h3 style="font-size:1.15rem; font-weight:700; color:#f8fafc; margin-bottom:6px;">รายงานผลฉบับสมบูรณ์ที่สร้างขึ้นจากระบบทดสอบ</h3>
-        <p style="color:var(--muted); font-size:0.85rem; margin-bottom:16px;">
-          สามารถคลิกเพื่อพรีวิวหน้าเอกสารได้ทันทีในโมดอล หรือเปิดเต็มหน้าต่างเพื่อดูตารางและภาพเปรียบเทียบความละเอียดสูง
-        </p>
-        
-        <div class="report-grid">
-          <!-- Card 1: Benchmark -->
-          <div class="report-card">
-            <div class="report-card-top">
-              <span class="report-card-badge badge-cyan">Quantitative Report</span>
-              <div class="report-card-title">📊 Benchmark Results (20 ภาพ)</div>
-              <div class="report-card-desc">
-                ตารางวัดผล 20 ภาพมาตรฐานพร้อมค่า PSNR, SSIM, LPIPS, NIQE, MUSIQ และตาราง Ablation Study ฉบับเต็ม
+          <div class="report-grid">
+            <div class="report-card">
+              <div class="report-card-top">
+                <span class="report-card-badge badge-cyan">Quantitative Report</span>
+                <div class="report-card-title">📊 Benchmark Results (20 ภาพ)</div>
+                <div class="report-card-desc">
+                  ตารางวัดผล 20 ภาพมาตรฐานพร้อมค่า PSNR, SSIM, LPIPS, NIQE, MUSIQ และ Ablation Study ฉบับเต็ม
+                </div>
+              </div>
+              <div class="report-card-actions">
+                <button class="btn-report-preview" onclick="openReportModal('/benchmark', '📊 Benchmark Results (20 ภาพมาตรฐาน)')">👁️ พรีวิวในหน้านี้</button>
+                <a class="btn-report-open" href="/benchmark" target="_blank">↗️ เปิดเต็มจอ</a>
               </div>
             </div>
-            <div class="report-card-actions">
-              <button class="btn-report-preview" onclick="openReportModal('/benchmark', '📊 Benchmark Results (20 ภาพมาตรฐาน)')">👁️ พรีวิวในหน้านี้</button>
-              <a class="btn-report-open" href="/benchmark" target="_blank">↗️ เปิดเต็มจอ</a>
-            </div>
-          </div>
 
-          <!-- Card 2: 20-Image Comparison Table -->
-          <div class="report-card">
-            <div class="report-card-top">
-              <span class="report-card-badge badge-emerald">Per-Image Analysis</span>
-              <div class="report-card-title">📑 ตารางเปรียบเทียบ 20 ภาพละเอียด</div>
-              <div class="report-card-desc">
-                ตารางภาพเปรียบเทียบเรียงแถวครบทั้ง 20 ชุด (Low-Res, Bicubic, โมเดลทีม, RealESRGAN) พร้อมตัวชี้วัดรายภาพ
+            <div class="report-card">
+              <div class="report-card-top">
+                <span class="report-card-badge badge-emerald">Per-Image Analysis</span>
+                <div class="report-card-title">📑 ตารางเปรียบเทียบ 20 ภาพละเอียด</div>
+                <div class="report-card-desc">
+                  ตารางเปรียบเทียบเรียงแถวครบทั้ง 20 ชุด (Low-Res, Bicubic, โมเดลทีม, Official) พร้อมตัวชี้วัดรายภาพ
+                </div>
+              </div>
+              <div class="report-card-actions">
+                <button class="btn-report-preview" onclick="openReportModal('/comparison-table', '📑 ตารางเปรียบเทียบภาพผลลัพธ์ 20 ชุด')">👁️ พรีวิวในหน้านี้</button>
+                <a class="btn-report-open" href="/comparison-table" target="_blank">↗️ เปิดเต็มจอ</a>
               </div>
             </div>
-            <div class="report-card-actions">
-              <button class="btn-report-preview" onclick="openReportModal('/comparison-table', '📑 ตารางเปรียบเทียบภาพผลลัพธ์ 20 ชุด')">👁️ พรีวิวในหน้านี้</button>
-              <a class="btn-report-open" href="/comparison-table" target="_blank">↗️ เปิดเต็มจอ</a>
-            </div>
-          </div>
 
-          <!-- Card 3: Model Comparison Gallery -->
-          <div class="report-card">
-            <div class="report-card-top">
-              <span class="report-card-badge badge-indigo">Visual Gallery</span>
-              <div class="report-card-title">🖼️ Model Visual Gallery</div>
-              <div class="report-card-desc">
-                แกลเลอรีเปรียบเทียบภาพผลลัพธ์ ซูมดูรายละเอียดคมชัด เปรียบเทียบ texture และขอบเส้นของโมเดล
+            <div class="report-card">
+              <div class="report-card-top">
+                <span class="report-card-badge badge-indigo">Visual Gallery</span>
+                <div class="report-card-title">🖼️ Model Visual Gallery</div>
+                <div class="report-card-desc">
+                  แกลเลอรีเปรียบเทียบภาพผลลัพธ์ ซูมดูรายละเอียดความคมชัด พื้นผิว และขอบเส้นของแต่ละโมเดล
+                </div>
+              </div>
+              <div class="report-card-actions">
+                <button class="btn-report-preview" onclick="openReportModal('/gallery', '🖼️ Model Visual Gallery')">👁️ พรีวิวในหน้านี้</button>
+                <a class="btn-report-open" href="/gallery" target="_blank">↗️ เปิดเต็มจอ</a>
               </div>
             </div>
-            <div class="report-card-actions">
-              <button class="btn-report-preview" onclick="openReportModal('/gallery', '🖼️ Model Visual Gallery')">👁️ พรีวิวในหน้านี้</button>
-              <a class="btn-report-open" href="/gallery" target="_blank">↗️ เปิดเต็มจอ</a>
-            </div>
-          </div>
 
-          <!-- Card 4: EDA Dashboard -->
-          <div class="report-card">
-            <div class="report-card-top">
-              <span class="report-card-badge badge-purple">Data Exploration</span>
-              <div class="report-card-title">📈 EDA & Data Exploration</div>
-              <div class="report-card-desc">
-                แดชบอร์ดสำรวจข้อมูลชุดฝึกสอน DIV2K, Flickr2K, OTS Clear และการกระจายตัวของพารามิเตอร์จำลองความเสื่อมสภาพ
+            <div class="report-card">
+              <div class="report-card-top">
+                <span class="report-card-badge badge-purple">Data Exploration</span>
+                <div class="report-card-title">📈 EDA & Data Exploration</div>
+                <div class="report-card-desc">
+                  แดชบอร์ดสำรวจข้อมูลชุดฝึกสอน DIV2K, Flickr2K, OTS Clear และการกระจายพารามิเตอร์ความเสื่อมสภาพ
+                </div>
               </div>
-            </div>
-            <div class="report-card-actions">
-              <button class="btn-report-preview" onclick="openReportModal('/eda', '📈 EDA & Data Exploration Dashboard')">👁️ พรีวิวในหน้านี้</button>
-              <a class="btn-report-open" href="/eda" target="_blank">↗️ เปิดเต็มจอ</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Row (Solid Non-Transparent Images for Easy Presentation Copying) -->
-      <div class="card-grid cols-2 mb-24">
-        <div class="glass-card pa-24 chart-img-card">
-          <div class="chart-header-row">
-            <div class="card-kicker">📉 กราฟ Training Loss (L1 Loss Curve @ 52k iters)</div>
-            <a href="/static/images/loss_curve_52k.png" download="RealESRNet_Loss_Curve_52k.png" class="btn-chart-dl" title="บันทึกรูปภาพพื้นหลังทึบสำหรับนำเสนอ">
-              💾 บันทึกรูป HD
-            </a>
-          </div>
-          <div class="chart-img-wrap">
-            <img src="/static/images/loss_curve_52k.png" alt="Training Loss Curve @ 52k iters" class="chart-img" loading="lazy" />
-          </div>
-          <div class="chart-copy-hint">💡 สามารถคลิกขวาแล้วกด "Copy Image" ไปวางในสไลด์นำเสนอได้ทันที (พื้นหลังทึบ คมชัดทุกรายละเอียด)</div>
-        </div>
-
-        <div class="glass-card pa-24 chart-img-card">
-          <div class="chart-header-row">
-            <div class="card-kicker">📊 กราฟเปรียบเทียบตัวชี้วัด (Benchmark Comparison)</div>
-            <a href="/static/images/benchmark_comparison.png" download="Benchmark_Comparison_20_Images.png" class="btn-chart-dl" title="บันทึกรูปภาพพื้นหลังทึบสำหรับนำเสนอ">
-              💾 บันทึกรูป HD
-            </a>
-          </div>
-          <div class="chart-img-wrap">
-            <img src="/static/images/benchmark_comparison.png" alt="Benchmark Comparison (6 Models)" class="chart-img" loading="lazy" />
-          </div>
-          <div class="chart-copy-hint">💡 สามารถคลิกขวาแล้วกด "Copy Image" ไปวางในสไลด์นำเสนอได้ทันที (พื้นหลังทึบ คมชัดทุกรายละเอียด)</div>
-        </div>
-      </div>
-
-      <!-- Analysis -->
-      <div class="glass-card pa-28 mb-24">
-        <div class="card-kicker">💬 บทวิเคราะห์ผลการทดลอง (Analysis & Insights)</div>
-        <div class="analysis-grid">
-          <div class="analysis-item analysis-good">
-            <div class="analysis-title">✅ ข้อสังเกตและจุดแข็งของโมเดลทีม (RealESRGAN_OurTeam_Improved)</div>
-            <ul>
-              <li><strong>ประสิทธิภาพเหนือกว่าโมเดลทางการรอบด้าน:</strong> Our Team Model Improved ทำคะแนน <strong>PSNR สูงถึง 22.02 dB</strong> และ <strong>SSIM 0.6491</strong> ชนะ Official (21.75 dB / 0.6477) พร้อมทั้งทำค่า <strong>LPIPS ได้ต่ำถึง 0.2293</strong> (ชนะ Official 0.2349) และ <strong>NIQE 4.631</strong> (ชนะ Official 4.746) สะท้อนถึงความสมดุลทั้งความถูกต้องของพิกเซลและความคมชัดระดับ Perceptual</li>
-              <li><strong>ก้าวข้าม Perception-Distortion Tradeoff:</strong> โมเดลผ่านการปรับปรุงสัดส่วน Loss และสถาปัตยกรรม ทำให้ลดรอยแตก Artifacts โดยยังคง Texture รายละเอียดของภาพได้อย่างเป็นธรรมชาติ</li>
-              <li><strong>ความเร็วในการประมวลผล:</strong> Inference Time บน GPU อยู่ที่ ~110 ms ต่อภาพ เหมาะสมกับการประยุกต์ใช้งานจริง</li>
-            </ul>
-          </div>
-          <div class="analysis-item analysis-limit">
-            <div class="analysis-title">⚠️ ข้อจำกัดและแนวทางต่อยอด (Future Work)</div>
-            <ul>
-              <li><strong>Overshoot Ratio:</strong> ด้วยการบูสต์ความคมชัดสูง ทำให้บริเวณขอบตัดที่มีความเปรียบต่างจัดมี Overshoot Ratio อยู่ที่ ~0.175 ซึ่งสามารถปรับลดได้ด้วยการปรับน้ำหนัก Sinc filter เพิ่มเติม</li>
-              <li><strong>Fine Details:</strong> รายละเอียดตัวอักษรขนาดจิ๋วหรือลายสานละเอียดมากๆ ยังต้องอาศัยการปรับปรุงชุดข้อมูล Font/OCR เฉพาะทางในอนาคต</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- High-Resolution Zoom Patch Comparison Showcase -->
-      <div class="glass-card pa-28">
-        <div class="card-kicker">🖼️ การเปรียบเทียบภาพขยายแบบเจาะจง 100% Crop (High-Resolution Visual Patch Showcase)</div>
-        <p style="color:var(--muted); font-size:0.875rem; margin-top:4px; margin-bottom:20px;">
-          *ในงาน Super-Resolution การลดขนาดภาพทั้งภาพลงมาดูในจอจะทำให้มองไม่เห็นความต่าง ด้านล่างนี้คือภาพตัดขยาย (Cropped Patches) ระดับพิกเซล 1:1 ของโมเดลแต่ละตัว เพื่อชี้ให้เห็นบริเวณที่โมเดลของทีมขยายรายละเอียดได้คมชัดเหนือกว่าอย่างแท้จริง
-        </p>
-
-        <!-- Crop 1: Bird -->
-        <div style="background:rgba(15,23,42,0.6); border:1px solid #334155; border-radius:12px; padding:18px; margin-bottom:20px;">
-          <div style="font-weight:700; font-size:1rem; color:#f8fafc; margin-bottom:4px;">ตัวอย่างที่ 1: 02 Bird (รายละเอียดขนรอบดวงตาและเส้นขนนก)</div>
-          <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:14px;">บริเวณซูมขยาย 1:1 พิกเซล เทียบเส้นขนรอบดวงตา ความคมชัดของขอบตาดำ และมิติแสงสะท้อนในลูกตา</div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px;">
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/bird_lr_overview.png" alt="LR" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Input LR (กรอบแดง)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/bird_bicubic.png" alt="Bicubic" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Bicubic (เบลอมัว)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/bird_esrnet.png" alt="Real-ESRNet" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRNet (เนียนแต่ขาดขน)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/bird_official.png" alt="Official" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRGAN Official</div>
-            </div>
-            <div style="background:rgba(37,99,235,0.15); border-radius:8px; overflow:hidden; border:2px solid #2563eb; text-align:center;">
-              <img src="/static/crops/bird_ours.png" alt="Our Team Model" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#60a5fa; font-weight:700; background:rgba(37,99,235,0.25); border-top:1px solid #2563eb;">⭐ Ours (Improved) คมชัดสุด</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/bird_gt.png" alt="Ground Truth" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#34d399; border-top:1px solid #1e293b;">Ground Truth (ต้นฉบับ)</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crop 2: Butterfly -->
-        <div style="background:rgba(15,23,42,0.6); border:1px solid #334155; border-radius:12px; padding:18px; margin-bottom:20px;">
-          <div style="font-weight:700; font-size:1rem; color:#f8fafc; margin-bottom:4px;">ตัวอย่างที่ 2: 03 Butterfly (ลวดลายและเส้นปีกผีเสื้อความถี่สูง)</div>
-          <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:14px;">บริเวณซูมขยาย 1:1 พิกเซล เปรียบเทียบเส้นขอบขาวดำ รอยต่อของลายปีก และการควบคุมเส้นวงคลื่น (Ringing)</div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px;">
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/butterfly_lr_overview.png" alt="LR" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Input LR (กรอบแดง)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/butterfly_bicubic.png" alt="Bicubic" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Bicubic (เบลอมัว)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/butterfly_esrnet.png" alt="Real-ESRNet" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRNet (เรียบไม่มีลาย)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/butterfly_official.png" alt="Official" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRGAN Official</div>
-            </div>
-            <div style="background:rgba(37,99,235,0.15); border-radius:8px; overflow:hidden; border:2px solid #2563eb; text-align:center;">
-              <img src="/static/crops/butterfly_ours.png" alt="Our Team Model" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#60a5fa; font-weight:700; background:rgba(37,99,235,0.25); border-top:1px solid #2563eb;">⭐ Ours (Improved) ลายชัดไร้คลื่น</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/butterfly_gt.png" alt="Ground Truth" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#34d399; border-top:1px solid #1e293b;">Ground Truth (ต้นฉบับ)</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Crop 3: Baboon -->
-        <div style="background:rgba(15,23,42,0.6); border:1px solid #334155; border-radius:12px; padding:18px;">
-          <div style="font-weight:700; font-size:1rem; color:#f8fafc; margin-bottom:4px;">ตัวอย่างที่ 3: 06 Baboon (เส้นขนละเอียดและริ้วรอยรอบจมูก)</div>
-          <div style="font-size:0.82rem; color:#94a3b8; margin-bottom:14px;">บริเวณซูมขยาย 1:1 พิกเซล ทดสอบการฟื้นฟูพื้นผิวที่มีความหนาแน่นสูงสุด เทียบเส้นขนตาและหนวดสัตว์</div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px;">
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/baboon_lr_overview.png" alt="LR" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Input LR (กรอบแดง)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/baboon_bicubic.png" alt="Bicubic" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Bicubic (เบลอมัว)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/baboon_esrnet.png" alt="Real-ESRNet" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRNet (เนื้อเนียนไม่มีขน)</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/baboon_official.png" alt="Official" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#94a3b8; border-top:1px solid #1e293b;">Real-ESRGAN Official</div>
-            </div>
-            <div style="background:rgba(37,99,235,0.15); border-radius:8px; overflow:hidden; border:2px solid #2563eb; text-align:center;">
-              <img src="/static/crops/baboon_ours.png" alt="Our Team Model" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#60a5fa; font-weight:700; background:rgba(37,99,235,0.25); border-top:1px solid #2563eb;">⭐ Ours (Improved) ขนเป็นเส้นธรรมชาติ</div>
-            </div>
-            <div style="background:#090d16; border-radius:8px; overflow:hidden; border:1px solid #334155; text-align:center;">
-              <img src="/static/crops/baboon_gt.png" alt="Ground Truth" style="width:100%; aspect-ratio:1/1; object-fit:cover; display:block;">
-              <div style="padding:6px; font-size:0.75rem; color:#34d399; border-top:1px solid #1e293b;">Ground Truth (ต้นฉบับ)</div>
+              <div class="report-card-actions">
+                <button class="btn-report-preview" onclick="openReportModal('/eda', '📈 EDA & Data Exploration Dashboard')">👁️ พรีวิวในหน้านี้</button>
+                <a class="btn-report-open" href="/eda" target="_blank">↗️ เปิดเต็มจอ</a>
+              </div>
             </div>
           </div>
         </div>
@@ -1018,8 +1074,17 @@
     <section class="pres-section" id="sec5">
       <div class="section-header">
         <div class="sec-kicker">⚡ Live Interactive Demo</div>
-        <h2 class="sec-title">ทดสอบ Super-Resolution สดบนภาพของคุณ</h2>
-        <p class="sec-desc">อัปโหลดหรือเลือกภาพตัวอย่าง แล้วกด Enhance เพื่อดูผลลัพธ์จริงจากโมเดลที่เทรนในโปรเจกต์นี้</p>
+        <h2 class="sec-title">ทดสอบขยายภาพ Super-Resolution สด</h2>
+        <p class="sec-desc">เปรียบเทียบผลลัพธ์ระดับพิกเซลทันที · สลับโมเดลและตั้งค่าภาพฝั่งซ้าย-ขวาได้ตามต้องการ</p>
+      </div>
+
+      <div class="tldr-banner">
+        <span class="tldr-badge">💡 วิธีดูความแตกต่างให้ชัดเจน</span>
+        <div class="tldr-text">
+          <strong>1)</strong> คลิกภาพตัวอย่าง (ระบบขยาย 4× ให้อัตโนมัติทันที) &nbsp;→&nbsp;
+          <strong>2)</strong> สลับโมเดลหรือเปลี่ยน <strong>ภาพเทียบฝั่งซ้าย</strong> ด้านบนเพื่อเทียบตรงๆ &nbsp;→&nbsp;
+          <strong>3)</strong> กด <strong>🔍 ซูม 2× / 4×</strong>, <strong>🖼️ วางเทียบคู่</strong> หรือ <strong>🔥 ไฮไลต์ความต่าง</strong> เพื่อเห็นเส้นขนและขอบภาพแบบพิกเซลต่อพิกเซล
+        </div>
       </div>
 
       <div class="demo-layout">
@@ -1027,62 +1092,68 @@
         <aside class="demo-controls glass-card pa-24">
 
           <div class="ctrl-section">
-            <div class="ctrl-title">1. เลือกภาพ</div>
-            <div class="dropzone" id="dropZone">
-              <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
-              <div class="dz-icon">📂</div>
-              <div class="dz-text">ลากไฟล์มาวาง หรือ <span>คลิกเพื่อเลือก</span></div>
-              <div class="dz-hint">PNG, JPG, WEBP · Ctrl+V เพื่อวาง</div>
-            </div>
-            <div class="presets-label">ภาพตัวอย่างจากโปรเจกต์:</div>
+            <div class="ctrl-title"><span class="step-badge">ขั้นตอนที่ 1</span> เลือกภาพตัวอย่างหรืออัปโหลดภาพ</div>
+            <div class="presets-label">ภาพตัวอย่างแนะนำ (สลับดูได้ทันที 0 ms):</div>
             <div class="presets-row" id="presetsRow">
-              <div class="preset-loading">กำลังโหลด...</div>
+              <div class="preset-loading" style="font-size:0.82rem;color:var(--sub);">กำลังโหลดภาพตัวอย่าง...</div>
+            </div>
+            <div class="dropzone dropzone-compact" id="dropZone">
+              <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" hidden>
+              <div class="dz-text">📂 ลากไฟล์มาวาง · <span>คลิกอัปโหลด</span> · หรือ Ctrl+V</div>
+              <div class="dz-hint">รองรับ PNG, JPG, WEBP สำหรับทดสอบภาพถ่ายจริงของคุณ</div>
             </div>
           </div>
 
           <div class="ctrl-section">
-            <div class="ctrl-title">2. เลือกโมเดล</div>
+            <div class="ctrl-title"><span class="step-badge">ขั้นตอนที่ 2</span> เลือกโมเดลฝั่งขวา (After)</div>
             <div class="model-radios">
               <label class="model-radio active" data-model="team_latest">
                 <input type="radio" name="mdl" value="team_latest" checked>
                 <div class="model-r-info">
-                  <div class="model-r-name">⭐ Our Team Model <span class="model-r-badge">Improved</span></div>
-                  <div class="model-r-desc">Real-ESRGAN (RealESRGAN_OurTeam_Improved.pth) · Top Quality</div>
+                  <div class="model-r-name">⭐ Our Team Model <span class="model-r-badge">แนะนำ · ดีที่สุด</span></div>
+                  <div class="model-r-desc">RealESRGAN_OurTeam_Improved · คมชัดสมจริง ไร้ลายหลอน</div>
                 </div>
               </label>
-              <label class="model-radio" data-model="realesrgan_x4plus">
-                <input type="radio" name="mdl" value="realesrgan_x4plus">
+              <label class="model-radio" data-model="realesrgan_official">
+                <input type="radio" name="mdl" value="realesrgan_official">
                 <div class="model-r-info">
-                  <div class="model-r-name">Real-ESRGAN x4plus (Official)</div>
-                  <div class="model-r-desc">Official pretrained · L1+Perceptual+GAN</div>
+                  <div class="model-r-name">Real-ESRGAN (Official)</div>
+                  <div class="model-r-desc">โมเดลทางการของผู้วิจัย (L1 + Perceptual + GAN)</div>
+                </div>
+              </label>
+              <label class="model-radio" data-model="realesrnet">
+                <input type="radio" name="mdl" value="realesrnet">
+                <div class="model-r-info">
+                  <div class="model-r-name">Real-ESRNet (Pretrained)</div>
+                  <div class="model-r-desc">L1 Loss ล้วน เน้นโครงสร้างตรงต้นฉบับ ผิวจะเรียบเนียน</div>
                 </div>
               </label>
               <label class="model-radio" data-model="bicubic">
                 <input type="radio" name="mdl" value="bicubic">
                 <div class="model-r-info">
                   <div class="model-r-name">Bicubic Baseline</div>
-                  <div class="model-r-desc">สำหรับเปรียบเทียบ · ไม่ใช้ Neural Net</div>
+                  <div class="model-r-desc">การขยายแบบดั้งเดิม (ไม่ใช้ AI) สำหรับเทียบความเบลอ</div>
                 </div>
               </label>
             </div>
           </div>
 
-          <div class="ctrl-section">
-            <div class="ctrl-title">3. Tile Size (ประหยัด VRAM)</div>
-            <select id="tileSelect" class="select-ctrl">
-              <option value="256" selected>256 (แนะนำ RTX 3050 Ti 4GB)</option>
-              <option value="400">400 (ภาพไม่ใหญ่มาก)</option>
-              <option value="0">No Tile (ต้องมี VRAM เหลือพอ)</option>
-            </select>
-          </div>
-
           <div class="ctrl-actions">
             <button id="enhBtn" class="btn-enhance" onclick="runEnhance()">
-              <span>⚡</span> Enhance 4×
+              <span>⚡</span> Enhance 4× (ขยายภาพด้วยโมเดลที่เลือก)
             </button>
             <button class="btn-compare-all" onclick="runCompareAll()">
-              <span>⚖️</span> เทียบทั้ง 3 โมเดล
+              <span>⚖️</span> เปรียบเทียบทุกโมเดลพร้อมกัน (Compare All)
             </button>
+          </div>
+
+          <div class="ctrl-section">
+            <label for="tileSelect" style="font-size:0.78rem; color:var(--sub);">⚙️ ขนาด Tile สำหรับภาพอัปโหลด (ประหยัด VRAM 4GB):</label>
+            <select id="tileSelect" class="select-ctrl">
+              <option value="256" selected>Tile 256 px (แนะนำสำหรับ RTX 3050 Ti 4GB)</option>
+              <option value="400">Tile 400 px (เหมาะกับภาพขนาดกลาง)</option>
+              <option value="0">ไม่แบ่ง Tile (ใช้เฉพาะเมื่อ VRAM เหลือพอ)</option>
+            </select>
           </div>
         </aside>
 
@@ -1090,32 +1161,68 @@
         <div class="demo-viewer glass-card pa-20">
           <div class="viewer-top">
             <div class="viewer-title-grp">
-              <span class="viewer-title">Interactive Comparison Viewer</span>
-              <span class="viewer-mode" id="viewerMode">Drag handle to compare</span>
+              <span class="viewer-title">หน้าต่างเปรียบเทียบ Before / After</span>
+              <span class="viewer-mode" id="viewerMode">ซ้าย: Before · ขวา: AI 4× (ลากเส้นตรงกลางเพื่อเทียบ)</span>
             </div>
             <div class="viewer-tools">
-              <button class="tool-b" id="loupeBtn" onclick="toggleLoupe()" title="Zoom Loupe">🔍</button>
-              <button class="tool-b" onclick="swapSides()" title="สลับภาพ">⇄</button>
-              <button class="tool-b" id="dlBtn" onclick="downloadOut()" disabled title="ดาวน์โหลด">💾</button>
+              <div class="view-mode-group" role="group" aria-label="โหมดการแสดงผล">
+                <button class="tool-b active" id="modeSliderBtn" onclick="setViewMode('slider')" title="ลากแถบแบ่งซ้าย-ขวา">↔️ เลื่อนเทียบ</button>
+                <button class="tool-b" id="modeSbsBtn" onclick="setViewMode('sbs')" title="แสดงภาพซ้ายและขวาคู่กันพร้อมซูมตรงกัน">🖼️ วางเทียบคู่</button>
+                <button class="tool-b" id="modeDiffBtn" onclick="setViewMode('diff')" title="แสดงแผนที่ความต่างระดับพิกเซล (ยิ่งสว่างยิ่งต่างมาก)">🔥 ไฮไลต์ความต่าง</button>
+              </div>
+              <div class="zoom-btn-group" role="group" aria-label="ระดับการซูม">
+                <button class="tool-b zoom-btn active" id="zoom1Btn" onclick="setViewerZoom(1)" title="ขนาดพอดีหน้าต่าง">1×</button>
+                <button class="tool-b zoom-btn" id="zoom2Btn" onclick="setViewerZoom(2)" title="ซูม 2 เท่า (เลื่อนเมาส์เพื่อดูจุดต่างๆ)">🔍 2×</button>
+                <button class="tool-b zoom-btn" id="zoom4Btn" onclick="setViewerZoom(4)" title="ซูม 4 เท่า เพื่อดูขอบและเส้นขน">🔍 4×</button>
+              </div>
+              <button class="tool-b" id="loupeBtn" onclick="toggleLoupe()" title="เปิด/ปิดแว่นขยาย 3.5×">🔎 แว่นขยาย</button>
+              <button class="tool-b" onclick="swapSides()" title="สลับภาพซ้ายและขวา">⇄ สลับ</button>
+              <button class="tool-b" id="dlBtn" onclick="downloadOut()" disabled title="ดาวน์โหลดภาพผลลัพธ์ 4×">💾 ดาวน์โหลด</button>
             </div>
+          </div>
+
+          <div class="viewer-baseline-bar">
+            <div class="baseline-select-wrap">
+              <label for="compareBaseSelect">🎯 ภาพฝั่งซ้าย (Before):</label>
+              <select id="compareBaseSelect" class="select-ctrl select-inline" onchange="onBaselineChange()">
+                <option value="bicubic" selected>Bicubic Baseline (เบลอ — เทียบความต่างกับ AI ชัดสุด)</option>
+                <option value="realesrnet">Real-ESRNet (Pretrained — ภาพเรียบเนียนแต่ขาดลาย)</option>
+                <option value="realesrgan_official">Real-ESRGAN (Official — เทียบตรงๆ กับโมเดลทีม)</option>
+                <option value="team_latest">⭐ Our Team Model (Improved)</option>
+              </select>
+            </div>
+            <div class="viewer-diff-pill" id="viewerDiffPill" title="ค่าความแตกต่างเฉลี่ยระดับพิกเซลระหว่างฝั่งซ้ายกับฝั่งขวา">Δ ความต่างเฉลี่ย: –</div>
+          </div>
+
+          <div class="viewer-status-banner" id="viewerStatusBanner">
+            <span id="viewerStatusText">📌 เลือกภาพตัวอย่างด้านซ้าย ระบบจะขยาย 4× ให้อัตโนมัติทันที</span>
           </div>
 
           <div class="comp-stage" id="compStage">
             <div class="empty-hint" id="emptyHint">
               <div class="eh-icon">🖼️</div>
-              <div class="eh-title">ยังไม่มีภาพ</div>
-              <div class="eh-desc">เลือกภาพตัวอย่างหรืออัปโหลดภาพของคุณจากแผงด้านซ้าย</div>
+              <div class="eh-title">กำลังเตรียมภาพตัวอย่าง...</div>
+              <div class="eh-desc">เลือกภาพตัวอย่างหรืออัปโหลดภาพของคุณจากขั้นตอนที่ 1 ด้านซ้าย</div>
             </div>
 
             <div class="slider-wrap" id="sliderWrap" style="display:none">
-              <div class="img-layer before-l">
-                <img id="beforeImg" src="" alt="Before">
-                <span class="img-tag tag-b" id="tagBefore">Original</span>
+              <div class="img-layer before-l" id="beforeLayer">
+                <img id="beforeImg" src="" alt="Before (Left)">
+                <span class="img-tag tag-b" id="tagBefore">ซ้าย: Bicubic (Before)</span>
               </div>
               <div class="img-layer after-l" id="afterLayer">
-                <img id="afterImg" src="" alt="After">
-                <span class="img-tag tag-a" id="tagAfter">Enhanced 4×</span>
+                <img id="afterImg" src="" alt="After (Right)">
               </div>
+              <span class="img-tag tag-a" id="tagAfter">ขวา: ผลลัพธ์ 4× (After)</span>
+
+              <canvas id="diffCanvas" class="diff-canvas" style="display:none;"></canvas>
+              <div class="diff-legend" id="diffLegend" style="display:none;">
+                <span>🔵 เหมือนเดิม</span>
+                <span>🟢 ต่างเล็กน้อย</span>
+                <span>🟡 ฟื้นฟูเส้นขอบ</span>
+                <span>🔴 รายละเอียดคมชัดต่างชัดเจน</span>
+              </div>
+
               <div class="handle" id="sliderHandle">
                 <div class="handle-line"></div>
                 <div class="handle-knob">◁▷</div>
@@ -1126,23 +1233,34 @@
               </div>
               <div class="proc-overlay" id="procOverlay" style="display:none">
                 <div class="spinner"></div>
-                <div class="proc-label">กำลังรัน Super-Resolution ผ่าน GPU...</div>
+                <div class="proc-label">กำลังประมวลผล Super-Resolution 4×...</div>
                 <div class="proc-timer" id="procTimer">0.0s</div>
+              </div>
+            </div>
+
+            <div class="sbs-grid" id="sideBySideWrap" style="display:none">
+              <div class="sbs-pane" id="sbsPaneLeft">
+                <span class="img-tag tag-b" id="sbsLabelLeft">ซ้าย: Before</span>
+                <div class="sbs-img-box"><img id="sbsImgLeft" src="" alt="Left View"></div>
+              </div>
+              <div class="sbs-pane" id="sbsPaneRight">
+                <span class="img-tag tag-a" id="sbsLabelRight">ขวา: After 4×</span>
+                <div class="sbs-img-box"><img id="sbsImgRight" src="" alt="Right View"></div>
               </div>
             </div>
           </div>
 
           <div class="stats-bar">
             <div class="stat-item"><div class="s-label">ขนาดต้นฉบับ</div><div class="s-val" id="statBefore">–</div></div>
-            <div class="stat-item hi"><div class="s-label">ขนาดหลัง 4×</div><div class="s-val" id="statAfter">–</div></div>
-            <div class="stat-item"><div class="s-label">Latency</div><div class="s-val" id="statLatency">–</div></div>
-            <div class="stat-item"><div class="s-label">โมเดล</div><div class="s-val" id="statModel">–</div></div>
+            <div class="stat-item hi"><div class="s-label">ขนาดหลังขยาย 4×</div><div class="s-val" id="statAfter">–</div></div>
+            <div class="stat-item"><div class="s-label">เวลาประมวลผล</div><div class="s-val" id="statLatency">–</div></div>
+            <div class="stat-item"><div class="s-label">โมเดลฝั่งขวา (After)</div><div class="s-val" id="statModel">–</div></div>
           </div>
 
           <!-- Multi compare strip -->
           <div id="multiStrip" style="display:none" class="multi-strip">
             <div class="ms-header">
-              <span>⚖️ เปรียบเทียบทุกโมเดล</span>
+              <span>⚖️ ผลเปรียบเทียบทุกโมเดลพร้อมกัน (คลิกที่การ์ดเพื่อสลับดูบนหน้าต่างเปรียบเทียบ)</span>
               <button onclick="document.getElementById('multiStrip').style.display='none'">✕</button>
             </div>
             <div class="ms-cards" id="msCards"></div>
@@ -1178,6 +1296,15 @@
     </div>
   </div>
 
-  <script src="/static/main.js"></script>
+  <!-- ========== IMAGE LIGHTBOX MODAL ========== -->
+  <div class="lightbox-overlay" id="imgLightbox" onclick="if(event.target === this) closeImageLightbox()">
+    <div class="lightbox-content">
+      <button class="lightbox-close" onclick="closeImageLightbox()" aria-label="ปิดหน้าต่างขยายภาพ">✕</button>
+      <img class="lightbox-img" id="lightboxImg" src="" alt="ภาพขยาย">
+      <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+  </div>
+
+  <script src="/static/main.js?v=2.1"></script>
 </body>
 </html>

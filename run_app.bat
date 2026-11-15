@@ -5,18 +5,28 @@ echo   YumYayum (CP461) - Super-Resolution Web Application
 echo ========================================================
 echo.
 
-if not exist ".venv312\Scripts\python.exe" (
-    echo [ERROR] Virtual environment .venv312 not found!
-    echo Please setup environment first or run setup script.
+set "PYTHON_EXE="
+if exist ".venv312\Scripts\python.exe" (
+    set "PYTHON_EXE=.venv312\Scripts\python.exe"
+) else if exist "C:\Program Files\Python312\python.exe" (
+    set "PYTHON_EXE=C:\Program Files\Python312\python.exe"
+) else (
+    where python.exe >nul 2>nul
+    if %errorlevel%==0 set "PYTHON_EXE=python.exe"
+)
+
+if "%PYTHON_EXE%"=="" (
+    echo [ERROR] Python executable not found!
+    echo Please setup .venv312 or install Python 3.12 first.
     pause
     exit /b 1
 )
 
-echo [INFO] Activating .venv312 and starting FastAPI server...
-echo [INFO] Web App will open at: http://localhost:8000
+echo [INFO] Using Python: %PYTHON_EXE%
+echo [INFO] Web App will open at: http://127.0.0.1:8000
 echo.
 
-start "" "http://localhost:8000"
-.\.venv312\Scripts\python.exe -m uvicorn webapp.app:app --host 127.0.0.1 --port 8000 --reload
+start "" "http://127.0.0.1:8000"
+"%PYTHON_EXE%" -m uvicorn webapp.app:app --host 127.0.0.1 --port 8000 --reload
 
 pause
