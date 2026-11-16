@@ -801,8 +801,9 @@ body {
 .proc-timer { font-family:'Prompt', 'Outfit', sans-serif; font-size:1.35rem; font-weight:800; color:var(--a2); }
 
 /* Stats bar */
-.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
-@media(max-width:680px){ .stats-bar { grid-template-columns:1fr 1fr; } }
+.stats-bar { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+@media(max-width:1100px){ .stats-bar { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:640px){ .stats-bar { grid-template-columns:repeat(2,1fr); } }
 .stat-item {
   background:rgba(255,255,255,0.035); border:1px solid var(--border);
   padding:11px 14px; border-radius:var(--r-md);

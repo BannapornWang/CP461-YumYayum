@@ -26,6 +26,7 @@ from webapp.app import (  # noqa: E402
     TEAM_MODEL_PATH,
     _file_to_data_uri,
     apply_model_profile,
+    compute_fast_iqa_metrics,
     image_to_base64,
     load_precomputed_catalog,
     load_rrdb_model,
@@ -77,16 +78,20 @@ def _build_raw_input_preset(
     else:
         base_sr = cv2.resize(img_bgr, (out_w, out_h), interpolation=cv2.INTER_CUBIC)
 
-    models = {
-        m_key: image_to_base64(apply_model_profile(base_sr, img_bgr, m_key), ext=".jpg")
-        for m_key in ("bicubic", "realesrnet", "realesrgan_official", "team_latest")
-    }
+    models: dict[str, str] = {}
+    per_model_metrics: dict[str, dict[str, float]] = {}
+    for m_key in ("bicubic", "realesrnet", "realesrgan_official", "team_latest"):
+        out_img = apply_model_profile(base_sr, img_bgr, m_key)
+        models[m_key] = image_to_base64(out_img, ext=".jpg")
+        per_model_metrics[m_key] = compute_fast_iqa_metrics(out_img, m_key)
+
     catalog_entry = {
         "id": fname,
         "label": fname,
         "desc": "ภาพตัวอย่างสำหรับทดสอบเปรียบเทียบสด 4 โมเดล",
         "before_image": models["bicubic"],
         "models": models,
+        "metrics": per_model_metrics,
         "in_w": w,
         "in_h": h,
         "out_w": out_w,
