@@ -583,26 +583,17 @@ def api_presets():
             })
             seen_ids.add(pid)
 
-    lr_dir = os.path.join(BASE_DIR, "datasets", "eval_20", "LR")
-    for candidate_dir in (lr_dir, INPUTS_DIR):
-        if os.path.isdir(candidate_dir):
-            files = [
-                f for f in sorted(os.listdir(candidate_dir))
-                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))
-                and os.path.isfile(os.path.join(candidate_dir, f))
-                and f not in seen_ids
-            ][:6]
-            for f in files:
-                presets.append({
-                    "filename": f,
-                    "label": f,
-                    "desc": "ทดสอบประมวลผลสดจากโฟลเดอร์ inputs",
-                    "url": f"/api/inputs/{f}",
-                    "is_precomputed": False,
-                })
-                seen_ids.add(f)
-            if files:
-                break
+    raw_preset_files = ("00003.png", "00017_gray.png", "ADE_val_00000114.jpg", "wolf_gray.jpg")
+    for f in raw_preset_files:
+        if f not in seen_ids and resolve_input_image(f):
+            presets.append({
+                "filename": f,
+                "label": f,
+                "desc": "ภาพตัวอย่างสำหรับทดสอบเปรียบเทียบสด 4 โมเดล",
+                "url": f"/api/inputs/{f}",
+                "is_precomputed": False,
+            })
+            seen_ids.add(f)
 
     return {"presets": presets}
 
@@ -832,7 +823,10 @@ if os.path.isdir(STATIC_DIR):
 def serve_index():
     index_file = os.path.join(STATIC_DIR, "index.html")
     if os.path.isfile(index_file):
-        return FileResponse(index_file)
+        return FileResponse(
+            index_file,
+            headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+        )
     return {"message": "Welcome to CP461 YumYayum Super-Resolution API"}
 
 @app.get("/benchmark")

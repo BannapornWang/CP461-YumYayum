@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -21,6 +22,8 @@ APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
 STATIC_DIR = ROOT_DIR / "webapp" / "static"
 INPUTS_DIR = ROOT_DIR / "inputs"
+
+RAW_PRESET_FILES = ("00003.png", "00017_gray.png", "ADE_val_00000114.jpg", "wolf_gray.jpg")
 
 MODEL_BENCHMARK_METRICS: dict[str, dict[str, float]] = {
     "bicubic":             {"psnr": 23.41, "ssim": 0.6938, "lpips": 0.4485, "niqe": 7.644, "musiq": 35.70},
@@ -357,9 +360,29 @@ def _load_embedded_reports() -> dict[str, str]:
     return reports
 
 
+def _get_assets_fingerprint() -> str:
+    """Compute cache fingerprint from mtime, size, and content digest of UI assets."""
+    tracked = [
+        Path(__file__),
+        STATIC_DIR / "index.html",
+        STATIC_DIR / "style.css",
+        STATIC_DIR / "main.js",
+    ]
+    parts: list[str] = []
+    for path in tracked:
+        try:
+            st_info = path.stat()
+            digest = hashlib.sha1(path.read_bytes()).hexdigest()[:10]
+            parts.append(f"{path.name}:{st_info.st_mtime_ns}:{st_info.st_size}:{digest}")
+        except OSError:
+            parts.append(f"{path.name}:missing")
+    return "|".join(parts)
+
+
 @st.cache_data(show_spinner=False)
-def build_fullstack_studio_html() -> str:
+def build_fullstack_studio_html(assets_fingerprint: str = "") -> str:
     """Bundle the local FastAPI presentation studio into a self-contained HTML document."""
+    _ = assets_fingerprint
     static_asset_uris = _collect_static_asset_uris()
     raw_catalog = load_precomputed_catalog()
 
@@ -409,7 +432,7 @@ def build_fullstack_studio_html() -> str:
             "available_models": list(item["models"].keys()),
         })
 
-    for fname in ("00003.png", "00017_gray.png"):
+    for fname in RAW_PRESET_FILES:
         built = _build_raw_input_preset(fname)
         if built is not None:
             preset_entry, catalog_entry = built
@@ -519,7 +542,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    html_content = build_fullstack_studio_html()
+    html_content = build_fullstack_studio_html(_get_assets_fingerprint())
     components.html(html_content, height=1080, scrolling=True)
 
 
