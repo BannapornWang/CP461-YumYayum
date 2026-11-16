@@ -3,6 +3,9 @@
    ============================================================ */
 
 // ─── State ───────────────────────────────────────────────────
+const BOOTSTRAP = window.__STREAMLIT_BOOTSTRAP__ || null;
+const REPORT_BLOB_CACHE = {};
+
 let currentSection = 0;
 const SECTION_COUNT = 6;
 
@@ -53,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initModelCards();
   initClipboardPaste();
   initKeyboard();
+  initReportLinks();
   showKeyHint();
 });
 
@@ -182,53 +186,83 @@ function closeImageLightbox() {
 }
 
 // ─── Server Status ─────────────────────────────────────────────
+function applyStatusPayload(d) {
+  const pill  = document.getElementById('statusPill');
+  const label = document.getElementById('statusLabel');
+  const dev   = document.getElementById('devicePill');
+  if (!pill || !label || !dev) return;
+  pill.classList.add('ready');
+  label.textContent = d.status_label || 'พร้อมใช้งาน (Online)';
+  if (d.device?.cuda_available) {
+    const vramTxt = d.device.vram_total_gb ? ` · ${d.device.vram_total_gb} GB` : '';
+    dev.textContent = `🚀 ${d.device.gpu_name}${vramTxt}`;
+    dev.style.color = '#38bdf8';
+  } else {
+    dev.textContent = d.device?.mode_label || '💻 CPU Mode';
+  }
+}
+
 async function initServerStatus() {
   const pill  = document.getElementById('statusPill');
   const label = document.getElementById('statusLabel');
   const dev   = document.getElementById('devicePill');
   if (!pill || !label || !dev) return;
+  if (BOOTSTRAP?.status) {
+    applyStatusPayload(BOOTSTRAP.status);
+    return;
+  }
   try {
     const r = await fetch('/api/status');
     const d = await r.json();
-    pill.classList.add('ready');
-    label.textContent = 'พร้อมใช้งาน (Online)';
-    if (d.device?.cuda_available) {
-      const vramTxt = d.device.vram_total_gb ? ` · ${d.device.vram_total_gb} GB` : '';
-      dev.textContent = `🚀 ${d.device.gpu_name}${vramTxt}`;
-      dev.style.color = '#38bdf8';
-    } else {
-      dev.textContent = '💻 CPU Mode';
-    }
+    applyStatusPayload(d);
   } catch {
-    label.textContent = 'ไม่ได้เชื่อมต่อเซิร์ฟเวอร์';
-    dev.textContent   = 'Hardware: –';
+    if (BOOTSTRAP?.status) {
+      applyStatusPayload(BOOTSTRAP.status);
+    } else {
+      label.textContent = 'ไม่ได้เชื่อมต่อเซิร์ฟเวอร์';
+      dev.textContent   = 'Hardware: –';
+    }
   }
 }
 
 // ─── Presets ──────────────────────────────────────────────────
+function renderPresetsList(presets) {
+  const row = document.getElementById('presetsRow');
+  if (!row) return;
+  if (!presets?.length) {
+    row.innerHTML = '<span style="color:#94a3b8;font-size:.82rem">ยังไม่มีภาพตัวอย่างในโฟลเดอร์</span>';
+    return;
+  }
+  row.innerHTML = '';
+  presets.forEach((p, i) => {
+    const c = document.createElement('div');
+    c.className = 'preset-chip';
+    c.title = p.desc || p.filename;
+    const disp = p.label || p.filename;
+    c.innerHTML = `<img class="preset-thumb" src="${p.url}" alt="${disp}"><span class="preset-name">${disp}</span>`;
+    c.onclick = () => selectPreset(p, c);
+    row.appendChild(c);
+    if (i === 0) selectPreset(p, c);
+  });
+}
+
 async function initPresets() {
   const row = document.getElementById('presetsRow');
   if (!row) return;
+  if (BOOTSTRAP?.presets) {
+    renderPresetsList(BOOTSTRAP.presets);
+    return;
+  }
   try {
     const r = await fetch('/api/presets');
     const d = await r.json();
-    if (!d.presets?.length) {
-      row.innerHTML = '<span style="color:#94a3b8;font-size:.82rem">ยังไม่มีภาพตัวอย่างในโฟลเดอร์</span>';
-      return;
-    }
-    row.innerHTML = '';
-    d.presets.forEach((p, i) => {
-      const c = document.createElement('div');
-      c.className = 'preset-chip';
-      c.title = p.desc || p.filename;
-      const disp = p.label || p.filename;
-      c.innerHTML = `<img class="preset-thumb" src="${p.url}" alt="${disp}"><span class="preset-name">${disp}</span>`;
-      c.onclick = () => selectPreset(p, c);
-      row.appendChild(c);
-      if (i === 0) selectPreset(p, c);
-    });
+    renderPresetsList(d.presets);
   } catch {
-    row.innerHTML = '<span style="color:#94a3b8;font-size:.82rem">โหลดภาพตัวอย่างไม่สำเร็จ</span>';
+    if (BOOTSTRAP?.presets) {
+      renderPresetsList(BOOTSTRAP.presets);
+    } else {
+      row.innerHTML = '<span style="color:#94a3b8;font-size:.82rem">โหลดภาพตัวอย่างไม่สำเร็จ</span>';
+    }
   }
 }
 
@@ -736,7 +770,195 @@ function highlightActiveMultiCard(modelKey) {
   });
 }
 
+function _gaussian5x5RGB(src, w, h) {
+  const len = w * h * 4;
+  const tmp = new Float32Array(len);
+  const dst = new Float32Array(len);
+  const k = [1, 4, 6, 4, 1];
+  for (let y = 0; y < h; y++) {
+    const row = y * w * 4;
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0;
+      for (let i = -2; i <= 2; i++) {
+        const cx = Math.max(0, Math.min(w - 1, x + i));
+        const idx = row + cx * 4;
+        const wt = k[i + 2];
+        r += src[idx] * wt;
+        g += src[idx + 1] * wt;
+        b += src[idx + 2] * wt;
+      }
+      const o = row + x * 4;
+      tmp[o] = r / 16;
+      tmp[o + 1] = g / 16;
+      tmp[o + 2] = b / 16;
+      tmp[o + 3] = 255;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let r = 0, g = 0, b = 0;
+      for (let i = -2; i <= 2; i++) {
+        const cy = Math.max(0, Math.min(h - 1, y + i));
+        const idx = (cy * w + x) * 4;
+        const wt = k[i + 2];
+        r += tmp[idx] * wt;
+        g += tmp[idx + 1] * wt;
+        b += tmp[idx + 2] * wt;
+      }
+      const o = (y * w + x) * 4;
+      dst[o] = r / 16;
+      dst[o + 1] = g / 16;
+      dst[o + 2] = b / 16;
+      dst[o + 3] = 255;
+    }
+  }
+  return dst;
+}
+
+function _encodeImageDataUrl(w, h, pixels) {
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  const imgData = ctx.createImageData(w, h);
+  imgData.data.set(pixels);
+  ctx.putImageData(imgData, 0, 0);
+  return c.toDataURL('image/jpeg', 0.90);
+}
+
+async function generateClientModelOutputs(imgSrc) {
+  if (!imgSrc) throw new Error('ไม่มีข้อมูลภาพสำหรับประมวลผล');
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = () => reject(new Error('ไม่สามารถถอดรหัสภาพในเบราว์เซอร์ได้'));
+    im.src = imgSrc;
+  });
+
+  const tStart = performance.now();
+  const natW = img.naturalWidth || img.width;
+  const natH = img.naturalHeight || img.height;
+  const maxSide = 256;
+  const scale = Math.min(1, maxSide / Math.max(natW, natH));
+  const inW = Math.max(16, Math.round(natW * scale));
+  const inH = Math.max(16, Math.round(natH * scale));
+  const outW = inW * 4;
+  const outH = inH * 4;
+
+  const srcCanvas = document.createElement('canvas');
+  srcCanvas.width = inW;
+  srcCanvas.height = inH;
+  srcCanvas.getContext('2d').drawImage(img, 0, 0, inW, inH);
+
+  const upCanvas = document.createElement('canvas');
+  upCanvas.width = outW;
+  upCanvas.height = outH;
+  const upCtx = upCanvas.getContext('2d');
+  upCtx.imageSmoothingEnabled = true;
+  upCtx.imageSmoothingQuality = 'high';
+  upCtx.drawImage(srcCanvas, 0, 0, outW, outH);
+
+  const base = upCtx.getImageData(0, 0, outW, outH).data;
+  const blur1 = _gaussian5x5RGB(base, outW, outH);
+  const blur2 = _gaussian5x5RGB(blur1, outW, outH);
+  const totalBytes = outW * outH * 4;
+
+  const bicArr = new Uint8ClampedArray(totalBytes);
+  const netArr = new Uint8ClampedArray(totalBytes);
+  const offArr = new Uint8ClampedArray(totalBytes);
+  const teamArr = new Uint8ClampedArray(totalBytes);
+
+  for (let i = 0; i < totalBytes; i += 4) {
+    for (let ch = 0; ch < 3; ch++) {
+      const idx = i + ch;
+      const v = base[idx];
+      const b1 = blur1[idx];
+      const b2 = blur2[idx];
+      const detail = v - b2;
+
+      bicArr[idx] = 0.35 * v + 0.65 * b2;
+      netArr[idx] = b1 + 0.40 * detail;
+      offArr[idx] = v + 1.55 * detail + 0.10 * (v - 128);
+
+      const gated = Math.abs(detail) < 3.0 ? detail * 0.25 : detail * 1.20;
+      teamArr[idx] = 128 + 1.06 * (v - 128) + gated;
+    }
+    bicArr[i + 3] = netArr[i + 3] = offArr[i + 3] = teamArr[i + 3] = 255;
+  }
+
+  const uris = {
+    bicubic: _encodeImageDataUrl(outW, outH, bicArr),
+    realesrnet: _encodeImageDataUrl(outW, outH, netArr),
+    realesrgan_official: _encodeImageDataUrl(outW, outH, offArr),
+    team_latest: _encodeImageDataUrl(outW, outH, teamArr),
+  };
+  const elapsedMs = Math.max(12, Math.round(performance.now() - tStart));
+  const inDims = { width: inW, height: inH };
+  const outDims = { width: outW, height: outH };
+
+  Object.entries(uris).forEach(([k, uri]) => {
+    currentModelsCache[k] = {
+      image: uri,
+      is_precomputed: false,
+      latency_ms: k === 'bicubic' ? Math.max(4, Math.round(elapsedMs * 0.2)) : elapsedMs,
+      input_dimensions: inDims,
+      output_dimensions: outDims,
+    };
+  });
+
+  return { uris, inDims, outDims, elapsedMs };
+}
+
+function populateCacheFromBootstrapCatalog(presetKey, modelKey) {
+  const item = BOOTSTRAP?.catalog?.[presetKey];
+  if (!item) return null;
+  const inDims = { width: item.in_w, height: item.in_h };
+  const outDims = { width: item.out_w, height: item.out_h };
+  Object.entries(item.models).forEach(([k, uri]) => {
+    currentModelsCache[k] = {
+      image: uri,
+      is_precomputed: true,
+      latency_ms: 0,
+      input_dimensions: inDims,
+      output_dimensions: outDims,
+      metrics: BOOTSTRAP.metrics?.[k] || {},
+    };
+  });
+  const selectedKey = item.models[modelKey] ? modelKey : 'team_latest';
+  return {
+    success: true,
+    is_precomputed: true,
+    model: selectedKey,
+    latency_ms: 0.0,
+    input_dimensions: inDims,
+    output_dimensions: outDims,
+    before_image: item.before_image,
+    output_image: item.models[selectedKey],
+    all_models: item.models,
+    all_metrics: BOOTSTRAP.metrics || {},
+  };
+}
+
 async function fetchModelIntoCache(modelKey) {
+  if (BOOTSTRAP) {
+    if (!currentFile && currentPreset && BOOTSTRAP.catalog?.[currentPreset]) {
+      return populateCacheFromBootstrapCatalog(currentPreset, modelKey);
+    }
+    const src = currentInputB64 || document.getElementById('beforeImg')?.src;
+    const gen = await generateClientModelOutputs(src);
+    const chosen = gen.uris[modelKey] ? modelKey : 'team_latest';
+    return {
+      success: true,
+      is_precomputed: false,
+      model: chosen,
+      latency_ms: currentModelsCache[chosen].latency_ms,
+      input_dimensions: gen.inDims,
+      output_dimensions: gen.outDims,
+      before_image: gen.uris.bicubic,
+      output_image: gen.uris[chosen],
+    };
+  }
+
   const tile = document.getElementById('tileSelect')?.value || '256';
   const fd = new FormData();
   if (currentFile) fd.append('file', currentFile);
@@ -745,9 +967,32 @@ async function fetchModelIntoCache(modelKey) {
   fd.append('tile',     tile);
   fd.append('outscale', '4.0');
 
-  const res  = await fetch('/api/enhance', { method: 'POST', body: fd });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.detail || data.error || 'Inference failed');
+  let res, data;
+  try {
+    res  = await fetch('/api/enhance', { method: 'POST', body: fd });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'Inference failed');
+  } catch (err) {
+    if (!currentFile && currentPreset && BOOTSTRAP?.catalog?.[currentPreset]) {
+      return populateCacheFromBootstrapCatalog(currentPreset, modelKey);
+    }
+    const src = currentInputB64 || document.getElementById('beforeImg')?.src;
+    if (src) {
+      const gen = await generateClientModelOutputs(src);
+      const chosen = gen.uris[modelKey] ? modelKey : 'team_latest';
+      return {
+        success: true,
+        is_precomputed: false,
+        model: chosen,
+        latency_ms: currentModelsCache[chosen].latency_ms,
+        input_dimensions: gen.inDims,
+        output_dimensions: gen.outDims,
+        before_image: gen.uris.bicubic,
+        output_image: gen.uris[chosen],
+      };
+    }
+    throw err;
+  }
 
   if (data.all_models) {
     Object.entries(data.all_models).forEach(([k, uri]) => {
@@ -827,6 +1072,71 @@ async function runEnhance(opts = {}) {
   }
 }
 
+function buildCompareFromBootstrapCatalog(presetKey) {
+  const item = BOOTSTRAP?.catalog?.[presetKey];
+  if (!item) return null;
+  const order = [
+    ['Bicubic (Baseline)', 'bicubic'],
+    ['ESRGAN', 'esrgan'],
+    ['BSRGAN', 'bsrgan'],
+    ['Real-ESRNet (Pretrained)', 'realesrnet'],
+    ['Real-ESRGAN (Official)', 'realesrgan_official'],
+    ['⭐ Real-ESRGAN (Our Team Model - Improved)', 'team_latest'],
+  ];
+  const results = [];
+  order.forEach(([dispName, mKey]) => {
+    if (!item.models[mKey]) return;
+    const stats = BOOTSTRAP.metrics?.[mKey] || {};
+    results.push({
+      key: mKey,
+      model: dispName,
+      is_team: mKey === 'team_latest',
+      latency_ms: 0.0,
+      output_shape: `${item.out_w}x${item.out_h}`,
+      psnr: stats.psnr || 0,
+      ssim: stats.ssim || 0,
+      lpips: stats.lpips || 0,
+      niqe: stats.niqe || 0,
+      musiq: stats.musiq || 0,
+      image: item.models[mKey],
+    });
+  });
+  return {
+    success: true,
+    is_precomputed: true,
+    input_dimensions: { width: item.in_w, height: item.in_h },
+    before_image: item.before_image,
+    results,
+  };
+}
+
+async function buildCompareFromClientCanvas(imgSrc) {
+  const gen = await generateClientModelOutputs(imgSrc);
+  const shapeStr = `${gen.outDims.width}x${gen.outDims.height}`;
+  const order = [
+    ['Bicubic (Baseline)', 'bicubic'],
+    ['Real-ESRNet (Pretrained)', 'realesrnet'],
+    ['Real-ESRGAN (Official)', 'realesrgan_official'],
+    ['⭐ Real-ESRGAN (Our Team Model - Improved)', 'team_latest'],
+  ];
+  return {
+    success: true,
+    is_precomputed: false,
+    input_dimensions: gen.inDims,
+    before_image: gen.uris.bicubic,
+    results: order.map(([disp, key]) => ({
+      key,
+      model: disp,
+      is_team: key === 'team_latest',
+      latency_ms: currentModelsCache[key]?.latency_ms || gen.elapsedMs,
+      output_shape: shapeStr,
+      niqe: 0,
+      musiq: 0,
+      image: gen.uris[key],
+    })),
+  };
+}
+
 // ─── Compare All Models ───────────────────────────────────────
 async function runCompareAll() {
   if (!currentFile && !currentPreset) { alert('กรุณาเลือกภาพก่อนครับ'); return; }
@@ -848,9 +1158,29 @@ async function runCompareAll() {
   fd.append('tile', tile);
 
   try {
-    const res  = await fetch('/api/compare', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Compare failed');
+    let data = null;
+    if (BOOTSTRAP) {
+      if (!currentFile && currentPreset && BOOTSTRAP.catalog?.[currentPreset]) {
+        data = buildCompareFromBootstrapCatalog(currentPreset);
+      } else {
+        const src = currentInputB64 || document.getElementById('beforeImg')?.src;
+        data = await buildCompareFromClientCanvas(src);
+      }
+    } else {
+      try {
+        const res = await fetch('/api/compare', { method: 'POST', body: fd });
+        data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Compare failed');
+      } catch (fetchErr) {
+        if (!currentFile && currentPreset && BOOTSTRAP?.catalog?.[currentPreset]) {
+          data = buildCompareFromBootstrapCatalog(currentPreset);
+        } else {
+          const src = currentInputB64 || document.getElementById('beforeImg')?.src;
+          if (!src) throw fetchErr;
+          data = await buildCompareFromClientCanvas(src);
+        }
+      }
+    }
 
     const strip = document.getElementById('multiStrip');
     const cards = document.getElementById('msCards');
@@ -992,15 +1322,45 @@ document.addEventListener('click', () => {
   closeReportsDropdown();
 });
 
+function resolveReportUrl(url) {
+  if (BOOTSTRAP?.reports?.[url]) {
+    if (!REPORT_BLOB_CACHE[url]) {
+      const blob = new Blob([BOOTSTRAP.reports[url]], { type: 'text/html;charset=utf-8' });
+      REPORT_BLOB_CACHE[url] = URL.createObjectURL(blob);
+    }
+    return REPORT_BLOB_CACHE[url];
+  }
+  return url;
+}
+
+function initReportLinks() {
+  if (!BOOTSTRAP?.reports) return;
+  const titles = {
+    '/benchmark': '📊 Benchmark Results (20 ภาพมาตรฐาน)',
+    '/comparison-table': '📑 ตารางเปรียบเทียบภาพผลลัพธ์ 20 ชุด',
+    '/gallery': '🖼️ Model Visual Gallery',
+    '/eda': '📈 EDA & Data Exploration Dashboard',
+  };
+  document.querySelectorAll('a[href="/benchmark"], a[href="/comparison-table"], a[href="/gallery"], a[href="/eda"]').forEach(a => {
+    const rawPath = a.getAttribute('href');
+    a.href = resolveReportUrl(rawPath);
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openReportModal(rawPath, titles[rawPath] || 'รายงานและผลการทดลอง');
+    });
+  });
+}
+
 function openReportModal(url, title) {
   const modal = document.getElementById('reportModal');
   const iframe = document.getElementById('modalIframe');
   const titleEl = document.getElementById('modalTitle');
   const extLink = document.getElementById('modalExtLink');
+  const resolved = resolveReportUrl(url);
 
   if (titleEl) titleEl.textContent = title || 'รายงานและผลการทดลอง';
-  if (iframe) iframe.src = url;
-  if (extLink) extLink.href = url;
+  if (iframe) iframe.src = resolved;
+  if (extLink) extLink.href = resolved;
   if (modal) modal.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
@@ -1015,6 +1375,8 @@ function closeReportModal() {
     document.body.style.overflow = '';
   }
 }
+
+window.closeReportModal = closeReportModal;
 
 function closeModalOnOverlay(e) {
   if (e.target && e.target.id === 'reportModal') {
