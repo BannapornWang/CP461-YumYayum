@@ -488,7 +488,7 @@ def main() -> None:
             html, body, .stApp,
             [data-testid="stAppViewContainer"],
             [data-testid="stMain"] {
-                background-color: #0b0f19 !important;
+                background-color: #f8fafc !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 overflow: hidden !important;

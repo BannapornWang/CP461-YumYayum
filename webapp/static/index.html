@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Prompt:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css?v=2.2">
+  <link rel="stylesheet" href="/static/style.css?v=2.3">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
 </head>
 <body>
@@ -73,6 +73,9 @@
           </a>
         </div>
       </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="สลับโหมดสว่าง (สีขาว) / โหมดมืด">
+        <span id="themeIcon">🌙</span> <span id="themeLabel">โหมดมืด</span>
+      </button>
       <div class="status-pill" id="statusPill"><span class="dot"></span><span id="statusLabel">กำลังเชื่อมต่อ…</span></div>
       <div class="device-pill" id="devicePill">GPU: –</div>
     </div>
@@ -340,7 +343,7 @@
         <div class="card-kicker">📊 สำรวจข้อมูลเชิงลึก (Interactive Data Exploration)</div>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
           <div>
-            <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:6px; color:#f8fafc;">📈 EDA Dashboard: สำรวจการกระจายตัวของ Dataset & Degradation</h3>
+            <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:6px; color:var(--txt);">📈 EDA Dashboard: สำรวจการกระจายตัวของ Dataset & Degradation</h3>
             <p style="color:var(--muted); font-size:0.9rem; max-width:720px; margin:0;">
               ดูกราฟสถิติของ DIV2K, Flickr2K, OTS Clear, สัดส่วน Aspect Ratio และการกระจายค่าจำลองความเสื่อมสภาพ (Blur σ=0.2–3.0, Noise, JPEG Quality)
             </p>
@@ -711,7 +714,7 @@
                   <td>โมเดลทางการของผู้วิจัย ให้ภาพคมชัดสไตล์ GAN</td>
                 </tr>
                 <tr class="best-row">
-                  <td><strong>⭐ Real-ESRGAN (Our Team Model - Improved)<br><small style="color:#93c5fd;">RealESRGAN_OurTeam_Improved.pth</small></strong></td>
+                  <td><strong>⭐ Real-ESRGAN (Our Team Model - Improved)<br><small class="best-row-sub">RealESRGAN_OurTeam_Improved.pth</small></strong></td>
                   <td><strong class="text-green">22.02</strong></td>
                   <td><strong class="text-green">0.6491</strong></td>
                   <td><strong class="text-green">0.2293</strong> <span class="winner-badge">🏆 ดีที่สุด</span></td>
@@ -957,15 +960,15 @@
         <div class="glass-card pa-28 mb-24">
           <div class="card-kicker">🔍 เปรียบเทียบสถาปัตยกรรม Discriminator: VGG vs U-Net + Spectral Norm</div>
           <div class="analysis-grid">
-            <div class="analysis-item" style="background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.28);">
-              <div class="analysis-title" style="color:#fca5a5;">❌ VGG-style Discriminator (แบบเดิม)</div>
+            <div class="analysis-item analysis-bad">
+              <div class="analysis-title">❌ VGG-style Discriminator (แบบเดิม)</div>
               <ul>
                 <li><strong>บีบเหลือค่าเดียว:</strong> ตัดสินภาพจากการลดขนาดจนเหลือตัวเลข Scalar ค่าเดียว (Global Context)</li>
                 <li><strong>มองไม่เห็นจุดเล็กๆ:</strong> ไม่สามารถชี้ตำแหน่งพิกเซลที่เพี้ยนได้ ทำให้เกิด Noise และลายหลอนง่าย (LPIPS 0.2980)</li>
               </ul>
             </div>
             <div class="analysis-item analysis-good">
-              <div class="analysis-title" style="color:#6ee7b7;">✅ U-Net Discriminator + Spectral Norm (ที่ใช้ในระบบนี้)</div>
+              <div class="analysis-title">✅ U-Net Discriminator + Spectral Norm (ที่ใช้ในระบบนี้)</div>
               <ul>
                 <li><strong>ประเมินระดับพิกเซล:</strong> มี Encoder-Decoder + Skip Connections ช่วยให้ตรวจจับทั้งโครงสร้างรวมและพื้นผิวเฉพาะจุด</li>
                 <li><strong>Spectral Norm (SN):</strong> คุมขอบเขต Gradient ไม่ให้แกว่งรุนแรงระหว่างฝึก ทำให้ภาพคมชัดเป็นธรรมชาติ</li>
@@ -975,8 +978,8 @@
         </div>
 
         <!-- Team Contribution Box -->
-        <div class="glass-card pa-28" style="background:rgba(6,78,59,0.24); border-color:rgba(16,185,129,0.34);">
-          <div class="card-kicker" style="color:#34d399;">💡 Contribution: สิ่งที่ทีมพัฒนาเพิ่มเติมจาก Official Repo</div>
+        <div class="glass-card pa-28 contrib-card">
+          <div class="card-kicker">💡 Contribution: สิ่งที่ทีมพัฒนาเพิ่มเติมจาก Official Repo</div>
           <div class="rationale-grid">
             <div class="rationale-item">
               <span class="rationale-icon">💻</span>
@@ -1004,7 +1007,7 @@
       <div class="results-panel" id="resPanelReports" data-res-panel="reports">
         <div class="glass-card pa-28">
           <div class="card-kicker">📁 ศูนย์รายงานและแดชบอร์ดฉบับสมบูรณ์ (Interactive Reports Hub)</div>
-          <h3 style="font-size:1.15rem; font-weight:700; color:#f8fafc; margin-bottom:6px;">เปิดดูรายงานผลการทดลองฉบับเต็ม</h3>
+          <h3 style="font-size:1.15rem; font-weight:700; color:var(--txt); margin-bottom:6px;">เปิดดูรายงานผลการทดลองฉบับเต็ม</h3>
           <p style="color:var(--muted); font-size:0.88rem; margin-bottom:16px;">
             คลิก "พรีวิวในหน้านี้" เพื่อเปิดดูแบบ Popup หรือกด "เปิดเต็มจอ" เพื่อดูในแท็บใหม่
           </p>
@@ -1307,6 +1310,6 @@
     </div>
   </div>
 
-  <script src="/static/main.js?v=2.2"></script>
+  <script src="/static/main.js?v=2.3"></script>
 </body>
 </html>

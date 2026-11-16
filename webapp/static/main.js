@@ -47,6 +47,7 @@ const OVERVIEW_SAMPLES = {
 
 // ─── Init ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   buildNavDots();
   updateNavState();
   initServerStatus();
@@ -59,6 +60,32 @@ document.addEventListener('DOMContentLoaded', () => {
   initReportLinks();
   showKeyHint();
 });
+
+// ─── Theme Switcher (Light / Dark) ──────────────────────────
+function applyTheme(theme) {
+  const mode = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', mode);
+  const icon = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
+  if (icon) icon.textContent = mode === 'light' ? '🌙' : '☀️';
+  if (label) label.textContent = mode === 'light' ? 'โหมดมืด' : 'โหมดสว่าง';
+  try {
+    localStorage.setItem('yumyayum_theme', mode);
+  } catch {}
+}
+
+function initTheme() {
+  let saved = 'light';
+  try {
+    saved = localStorage.getItem('yumyayum_theme') || 'light';
+  } catch {}
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
 
 // ─── Navigation ───────────────────────────────────────────────
 function buildNavDots() {
@@ -1373,7 +1400,7 @@ async function runCompareAll() {
           <span class="td-badge td-cyan">${timeBadge}</span>
         </div>
         <img class="ms-card-img" src="${r.image}" alt="${r.model}">
-        <div style="padding: 6px 10px; font-size: 12px; display: flex; justify-content: space-between; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.06);">
+        <div class="ms-card-metrics">
           <span>NIQE ↓: <strong>${r.niqe ? r.niqe.toFixed(3) : '–'}</strong></span>
           <span>MUSIQ ↑: <strong>${r.musiq ? r.musiq.toFixed(2) : '–'}</strong></span>
         </div>`;
@@ -1407,16 +1434,16 @@ async function runCompareAll() {
     }
 
     const rowsHtml = resultsList.map(r => `
-      <tr style="${r.is_team ? 'background: rgba(37,99,235,0.18); font-weight:600; color:#60a5fa;' : ''}">
-        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;"><strong>${r.model}</strong></td>
-        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937; ${r.niqe && r.niqe === minNiqe ? 'color:#10b981; font-weight:bold;' : ''}">
+      <tr class="${r.is_team ? 'is-team-row' : ''}">
+        <td><strong>${r.model}</strong></td>
+        <td class="${r.niqe && r.niqe === minNiqe ? 'is-best-score' : ''}">
           ${r.niqe ? r.niqe.toFixed(3) : '–'} ${r.niqe && r.niqe === minNiqe ? '🏆 ดีที่สุด' : ''}
         </td>
-        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937; ${r.musiq && r.musiq === maxMusiq ? 'color:#10b981; font-weight:bold;' : ''}">
+        <td class="${r.musiq && r.musiq === maxMusiq ? 'is-best-score' : ''}">
           ${r.musiq ? r.musiq.toFixed(2) : '–'} ${r.musiq && r.musiq === maxMusiq ? '🏆 ดีที่สุด' : ''}
         </td>
-        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;">${r.output_shape || '-'}</td>
-        <td style="padding: 10px 14px; border-bottom: 1px solid #1f2937;">${data.is_precomputed ? '0 ms (Benchmark)' : `${r.latency_ms} ms`}</td>
+        <td>${r.output_shape || '-'}</td>
+        <td>${data.is_precomputed ? '0 ms (Benchmark)' : `${r.latency_ms} ms`}</td>
       </tr>
     `).join('');
 
@@ -1425,17 +1452,17 @@ async function runCompareAll() {
       : '📊 ตารางสรุปผลเปรียบเทียบสด (Live IQA Metrics Summary):';
 
     tableWrap.innerHTML = `
-      <div style="font-size: 15px; font-weight: 600; color: #38bdf8; margin: 18px 0 10px 0;">
+      <div class="compare-summary-heading">
         ${tableHeading}
       </div>
-      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; background: #0f172a; border-radius: 8px; overflow: hidden; border: 1px solid #1f2937;">
+      <table class="compare-summary-table">
         <thead>
-          <tr style="background: #1e293b; color: #cbd5e1;">
-            <th style="padding: 10px 14px;">โมเดล (Model)</th>
-            <th style="padding: 10px 14px;">NIQE ↓ (ยิ่งต่ำยิ่งเป็นธรรมชาติ)</th>
-            <th style="padding: 10px 14px;">MUSIQ ↑ (คะแนนความสวยงาม)</th>
-            <th style="padding: 10px 14px;">ขนาดภาพ 4×</th>
-            <th style="padding: 10px 14px;">เวลาประมวลผล</th>
+          <tr>
+            <th>โมเดล (Model)</th>
+            <th>NIQE ↓ (ยิ่งต่ำยิ่งเป็นธรรมชาติ)</th>
+            <th>MUSIQ ↑ (คะแนนความสวยงาม)</th>
+            <th>ขนาดภาพ 4×</th>
+            <th>เวลาประมวลผล</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
