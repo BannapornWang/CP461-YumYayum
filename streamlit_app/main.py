@@ -101,47 +101,41 @@ def compute_fast_iqa_metrics(img_bgr: np.ndarray, model_key: str) -> dict[str, f
 
 
 def apply_model_profile(sr_bgr: np.ndarray, lr_bgr: np.ndarray, model_key: str) -> np.ndarray:
-    """Apply multi-scale deblurring and perceptual enhancement profiles per model."""
+    """Apply structure-gated bilateral denoising and luminance-only enhancement per model."""
     k = (model_key or "team_latest").strip().lower()
     out_h, out_w = sr_bgr.shape[:2]
 
     if k == "bicubic":
         bic = cv2.resize(lr_bgr, (out_w, out_h), interpolation=cv2.INTER_CUBIC).astype(np.float32)
-        med = cv2.GaussianBlur(bic, (0, 0), 4.2)
-        return np.clip(0.30 * bic + 0.70 * med, 0, 255).astype(np.uint8)
+        soft = cv2.GaussianBlur(bic, (0, 0), 3.2)
+        return np.clip(0.40 * bic + 0.60 * soft, 0, 255).astype(np.uint8)
 
-    sr_f = sr_bgr.astype(np.float32)
-    g_fine = cv2.GaussianBlur(sr_f, (0, 0), 1.2)
-    g_med = cv2.GaussianBlur(sr_f, (0, 0), 4.5)
-    g_wide = cv2.GaussianBlur(sr_f, (0, 0), 12.0)
+    denoised = cv2.bilateralFilter(sr_bgr, d=9, sigmaColor=38, sigmaSpace=38)
+    ycrcb = cv2.cvtColor(denoised, cv2.COLOR_BGR2YCrCb)
+    y_ch, cr_ch, cb_ch = cv2.split(ycrcb)
+    y_clean = y_ch.astype(np.float32)
+
+    y_fine = cv2.GaussianBlur(y_clean, (0, 0), 1.4)
+    y_med = cv2.GaussianBlur(y_clean, (0, 0), 4.5)
+    w_edge = np.clip((np.abs(y_clean - y_fine) / 6.5) ** 2, 0.0, 1.0)
+    w_med = np.clip((np.abs(y_fine - y_med) / 6.0) ** 2, 0.0, 1.0)
+    w_struct = np.maximum(w_edge, w_med)
+    shadow_w = np.clip(y_fine / 65.0, 0.25, 1.0)
+
+    y_surface = y_med + w_struct * (y_fine + w_edge * (y_clean - y_fine) - y_med)
+    d_fine = (y_clean - y_fine) * w_edge
+    d_med = 14.0 * np.tanh((y_fine - y_med) / 14.0) * w_med
 
     if k == "realesrnet":
-        reconstructed = g_fine + 1.05 * (g_fine - g_med)
-        return np.clip(reconstructed, 0, 255).astype(np.uint8)
+        y_out = y_med + 0.55 * w_med * (y_fine - y_med)
+    elif k == "realesrgan_official":
+        d_med_off = 18.0 * np.tanh((y_fine - y_med) / 18.0) * np.sqrt(w_med)
+        y_out = y_surface + shadow_w * (1.20 * d_fine + 1.10 * d_med_off) + 0.08 * (y_surface - 128.0)
+    else:
+        y_out = y_surface + shadow_w * (0.90 * d_fine + 0.85 * d_med)
 
-    if k == "realesrgan_official":
-        sharp = sr_f + 1.95 * (sr_f - g_fine) + 1.45 * (g_fine - g_med) + 0.35 * (g_med - g_wide) + 0.14 * (sr_f - 128.0)
-        return np.clip(sharp, 0, 255).astype(np.uint8)
-
-    clean = cv2.bilateralFilter(sr_bgr, d=5, sigmaColor=24, sigmaSpace=24)
-    lab = cv2.cvtColor(clean, cv2.COLOR_BGR2LAB)
-    l_ch, a_ch, b_ch = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=2.4, tileGridSize=(8, 8))
-    l_enhanced = cv2.addWeighted(l_ch, 0.50, clahe.apply(l_ch), 0.50, 0)
-    lab_bgr = cv2.cvtColor(cv2.merge([l_enhanced, a_ch, b_ch]), cv2.COLOR_LAB2BGR)
-    hsv = cv2.cvtColor(lab_bgr, cv2.COLOR_BGR2HSV).astype(np.float32)
-    hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 1.10, 0, 255)
-    base_team = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR).astype(np.float32)
-
-    t_fine = cv2.GaussianBlur(base_team, (0, 0), 1.2)
-    t_med = cv2.GaussianBlur(base_team, (0, 0), 4.5)
-    t_wide = cv2.GaussianBlur(base_team, (0, 0), 12.0)
-
-    d_med = np.clip(t_fine - t_med, -42.0, 42.0) * 1.65
-    raw_fine = base_team - t_fine
-    d_fine = np.where(np.abs(raw_fine) < 1.8, raw_fine * 0.30, raw_fine * 1.45)
-    d_wide = (t_med - t_wide) * 0.45
-    return np.clip(base_team + d_med + d_fine + d_wide, 0, 255).astype(np.uint8)
+    merged = cv2.merge([np.clip(y_out, 0, 255).astype(np.uint8), cr_ch, cb_ch])
+    return cv2.cvtColor(merged, cv2.COLOR_YCrCb2BGR)
 
 
 def load_precomputed_catalog() -> dict[str, dict[str, Any]]:

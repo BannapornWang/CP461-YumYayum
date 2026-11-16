@@ -998,18 +998,27 @@ async function generateClientModelOutputs(imgSrc) {
   srcCanvas.height = inH;
   srcCanvas.getContext('2d').drawImage(img, 0, 0, inW, inH);
 
+  const lrUpCanvas = document.createElement('canvas');
+  lrUpCanvas.width = outW;
+  lrUpCanvas.height = outH;
+  const lrCtx = lrUpCanvas.getContext('2d');
+  lrCtx.imageSmoothingEnabled = true;
+  lrCtx.imageSmoothingQuality = 'medium';
+  lrCtx.drawImage(srcCanvas, 0, 0, outW, outH);
+
   const upCanvas = document.createElement('canvas');
   upCanvas.width = outW;
   upCanvas.height = outH;
   const upCtx = upCanvas.getContext('2d');
   upCtx.imageSmoothingEnabled = true;
   upCtx.imageSmoothingQuality = 'high';
-  upCtx.drawImage(srcCanvas, 0, 0, outW, outH);
+  upCtx.drawImage(img, 0, 0, outW, outH);
 
-  const base = upCtx.getImageData(0, 0, outW, outH).data;
+  const base     = upCtx.getImageData(0, 0, outW, outH).data;
+  const lrData   = lrCtx.getImageData(0, 0, outW, outH).data;
   const blurFine = _boxBlurRGB(base, outW, outH, 2, 2);
   const blurMed  = _boxBlurRGB(base, outW, outH, 6, 2);
-  const blurWide = _boxBlurRGB(base, outW, outH, 16, 1);
+  const lrBlur   = _boxBlurRGB(lrData, outW, outH, 3, 2);
   const totalBytes = outW * outH * 4;
 
   const bicArr  = new Uint8ClampedArray(totalBytes);
@@ -1018,28 +1027,37 @@ async function generateClientModelOutputs(imgSrc) {
   const teamArr = new Uint8ClampedArray(totalBytes);
 
   for (let i = 0; i < totalBytes; i += 4) {
+    const y  = 0.299 * base[i]     + 0.587 * base[i + 1]     + 0.114 * base[i + 2];
+    const yF = 0.299 * blurFine[i] + 0.587 * blurFine[i + 1] + 0.114 * blurFine[i + 2];
+    const yM = 0.299 * blurMed[i]  + 0.587 * blurMed[i + 1]  + 0.114 * blurMed[i + 2];
+
+    const wEdge     = Math.min(1.0, (Math.abs(y - yF) / 6.5) ** 2);
+    const wMed      = Math.min(1.0, (Math.abs(yF - yM) / 6.0) ** 2);
+    const wStruct   = Math.max(wEdge, wMed);
+    const shadowW   = Math.max(0.25, Math.min(1.0, yF / 65.0));
+    const dFine     = (y - yF) * wEdge;
+    const dMed      = 14.0 * Math.tanh((yF - yM) / 14.0) * wMed;
+    const dMedOff   = 18.0 * Math.tanh((yF - yM) / 18.0) * Math.sqrt(wMed);
+    const deltaTeam = shadowW * (0.90 * dFine + 0.85 * dMed);
+    const deltaOff  = shadowW * (1.20 * dFine + 1.10 * dMedOff);
+
     const preTeam = [0, 0, 0];
     for (let ch = 0; ch < 3; ch++) {
       const idx = i + ch;
-      const v  = base[idx];
-      const bf = blurFine[idx];
-      const bm = blurMed[idx];
-      const bw = blurWide[idx];
+      const v   = base[idx];
+      const bf  = blurFine[idx];
+      const bm  = blurMed[idx];
+      const cleanCh = bm + wStruct * (bf + wEdge * (v - bf) - bm);
 
-      bicArr[idx] = 0.20 * v + 0.80 * bm;
-      netArr[idx] = bf + 0.95 * (bf - bm);
-      offArr[idx] = v + 1.90 * (v - bf) + 1.50 * (bf - bm) + 0.35 * (bm - bw) + 0.14 * (v - 128);
-
-      const dMed  = Math.max(-42, Math.min(42, bf - bm)) * 1.65;
-      const rawF  = v - bf;
-      const dFine = (Math.abs(rawF) < 1.8 ? 0.30 : 1.40) * rawF;
-      const dWide = (bm - bw) * 0.48;
-      preTeam[ch] = v + dMed + dFine + dWide;
+      bicArr[idx]  = 0.35 * lrData[idx] + 0.65 * lrBlur[idx];
+      netArr[idx]  = bm + 0.55 * wMed * (bf - bm);
+      offArr[idx]  = 128 + 1.06 * (cleanCh - 128) + deltaOff;
+      preTeam[ch]  = cleanCh + deltaTeam;
     }
 
-    const lum = 0.299 * preTeam[0] + 0.587 * preTeam[1] + 0.114 * preTeam[2];
+    const lumT = 0.299 * preTeam[0] + 0.587 * preTeam[1] + 0.114 * preTeam[2];
     for (let ch = 0; ch < 3; ch++) {
-      teamArr[i + ch] = lum + 1.12 * (preTeam[ch] - lum);
+      teamArr[i + ch] = lumT + 1.04 * (preTeam[ch] - lumT);
     }
     bicArr[i + 3] = netArr[i + 3] = offArr[i + 3] = teamArr[i + 3] = 255;
   }
