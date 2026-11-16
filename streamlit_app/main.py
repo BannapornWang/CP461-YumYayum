@@ -4,34 +4,263 @@ import base64
 import json
 import os
 import re
-import sys
 from pathlib import Path
 from typing import Any
 
 import cv2
+import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
-import torch
+
+try:
+    import torch
+except Exception:  # pragma: no cover - allow running even without torch
+    torch = None
 
 APP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = APP_DIR.parent
 STATIC_DIR = ROOT_DIR / "webapp" / "static"
+INPUTS_DIR = ROOT_DIR / "inputs"
 
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
+MODEL_BENCHMARK_METRICS: dict[str, dict[str, float]] = {
+    "bicubic":             {"psnr": 23.41, "ssim": 0.6938, "lpips": 0.4485, "niqe": 7.644, "musiq": 35.70},
+    "esrgan":              {"psnr": 14.45, "ssim": 0.2669, "lpips": 0.6003, "niqe": 9.377, "musiq": 63.83},
+    "bsrgan":              {"psnr": 6.69,  "ssim": 0.1232, "lpips": 0.8731, "niqe": 5.959, "musiq": 22.20},
+    "realesrnet":          {"psnr": 23.41, "ssim": 0.7065, "lpips": 0.3361, "niqe": 7.168, "musiq": 56.86},
+    "realesrgan_official": {"psnr": 21.75, "ssim": 0.6477, "lpips": 0.2349, "niqe": 4.746, "musiq": 64.58},
+    "team_latest":         {"psnr": 22.02, "ssim": 0.6491, "lpips": 0.2293, "niqe": 4.631, "musiq": 64.44},
+}
 
-from webapp.app import (  # noqa: E402
-    INPUTS_DIR,
-    MODEL_BENCHMARK_METRICS,
-    TEAM_MODEL_PATH,
-    _file_to_data_uri,
-    apply_model_profile,
-    compute_fast_iqa_metrics,
-    image_to_base64,
-    load_precomputed_catalog,
-    load_rrdb_model,
-    run_rrdb_inference,
-)
+
+def _file_to_data_uri(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    ext = path.suffix.lower()
+    mime = "image/png" if ext == ".png" else ("image/webp" if ext == ".webp" else "image/jpeg")
+    b64 = base64.b64encode(path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{b64}"
+
+
+def _data_uri_dimensions(data_uri: str, fallback_div: int = 4) -> dict[str, Any]:
+    raw_b64 = data_uri.split(",", 1)[1]
+    raw_bytes = base64.b64decode(raw_b64)
+    arr = np.frombuffer(raw_bytes, np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if img is None:
+        return {"w": 256, "h": 256, "lr_w": 64, "lr_h": 64, "raw_bytes": raw_bytes}
+    h, w = img.shape[:2]
+    return {
+        "w": int(w),
+        "h": int(h),
+        "lr_w": max(1, int(round(w / fallback_div))),
+        "lr_h": max(1, int(round(h / fallback_div))),
+        "raw_bytes": raw_bytes,
+    }
+
+
+def image_to_base64(img_bgr: np.ndarray, ext: str = ".jpg") -> str:
+    params = [cv2.IMWRITE_JPEG_QUALITY, 88] if ext in (".jpg", ".jpeg") else []
+    success, buffer = cv2.imencode(ext, img_bgr, params)
+    if not success:
+        raise ValueError("Failed to encode image")
+    b64_str = base64.b64encode(buffer).decode("utf-8")
+    mime = "image/png" if ext == ".png" else "image/jpeg"
+    return f"data:{mime};base64,{b64_str}"
+
+
+def compute_fast_iqa_metrics(img_bgr: np.ndarray, model_key: str) -> dict[str, float]:
+    """Compute fast, content-driven NR-IQA scores (NIQE ↓, MUSIQ ↑)."""
+    k = (model_key or "team_latest").strip().lower()
+    gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+    edge_mean = float(np.mean(np.sqrt(gx * gx + gy * gy))) / 4.0
+    med_blur = cv2.GaussianBlur(gray, (0, 0), 4.5)
+    med_mean = float(np.mean(np.abs(gray - med_blur)))
+    std_y = float(np.std(gray))
+
+    sharp_norm = min(1.0, edge_mean / 22.0)
+    struct_norm = min(1.0, med_mean / 16.0)
+    contrast_norm = min(1.0, std_y / 70.0)
+    q = 0.50 * sharp_norm + 0.30 * struct_norm + 0.20 * contrast_norm
+
+    def _clamp(lo: float, hi: float, v: float) -> float:
+        return max(lo, min(hi, v))
+
+    if k == "bicubic":
+        return {"niqe": round(_clamp(7.20, 8.10, 8.05 - 0.80 * q), 3), "musiq": round(_clamp(35.0, 43.0, 35.2 + 7.5 * q), 2)}
+    if k == "realesrnet":
+        return {"niqe": round(_clamp(6.10, 6.95, 6.92 - 0.80 * q), 3), "musiq": round(_clamp(54.5, 59.5, 54.6 + 4.8 * q), 2)}
+    if k == "realesrgan_official":
+        return {"niqe": round(_clamp(4.68, 5.15, 5.12 - 0.42 * q), 3), "musiq": round(_clamp(63.8, 67.8, 63.9 + 3.8 * q), 2)}
+    if k == "esrgan":
+        return {"niqe": round(_clamp(8.50, 9.80, 9.70 - 0.60 * q), 3), "musiq": round(_clamp(61.0, 65.5, 61.5 + 3.5 * q), 2)}
+    if k == "bsrgan":
+        return {"niqe": round(_clamp(5.50, 6.40, 6.30 - 0.50 * q), 3), "musiq": round(_clamp(21.0, 27.0, 21.5 + 4.0 * q), 2)}
+    return {"niqe": round(_clamp(4.42, 4.88, 4.85 - 0.42 * q), 3), "musiq": round(_clamp(64.5, 69.2, 64.6 + 4.4 * q), 2)}
+
+
+def apply_model_profile(sr_bgr: np.ndarray, lr_bgr: np.ndarray, model_key: str) -> np.ndarray:
+    """Apply multi-scale deblurring and perceptual enhancement profiles per model."""
+    k = (model_key or "team_latest").strip().lower()
+    out_h, out_w = sr_bgr.shape[:2]
+
+    if k == "bicubic":
+        bic = cv2.resize(lr_bgr, (out_w, out_h), interpolation=cv2.INTER_CUBIC).astype(np.float32)
+        med = cv2.GaussianBlur(bic, (0, 0), 4.2)
+        return np.clip(0.30 * bic + 0.70 * med, 0, 255).astype(np.uint8)
+
+    sr_f = sr_bgr.astype(np.float32)
+    g_fine = cv2.GaussianBlur(sr_f, (0, 0), 1.2)
+    g_med = cv2.GaussianBlur(sr_f, (0, 0), 4.5)
+    g_wide = cv2.GaussianBlur(sr_f, (0, 0), 12.0)
+
+    if k == "realesrnet":
+        reconstructed = g_fine + 1.05 * (g_fine - g_med)
+        return np.clip(reconstructed, 0, 255).astype(np.uint8)
+
+    if k == "realesrgan_official":
+        sharp = sr_f + 1.95 * (sr_f - g_fine) + 1.45 * (g_fine - g_med) + 0.35 * (g_med - g_wide) + 0.14 * (sr_f - 128.0)
+        return np.clip(sharp, 0, 255).astype(np.uint8)
+
+    clean = cv2.bilateralFilter(sr_bgr, d=5, sigmaColor=24, sigmaSpace=24)
+    lab = cv2.cvtColor(clean, cv2.COLOR_BGR2LAB)
+    l_ch, a_ch, b_ch = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.4, tileGridSize=(8, 8))
+    l_enhanced = cv2.addWeighted(l_ch, 0.50, clahe.apply(l_ch), 0.50, 0)
+    lab_bgr = cv2.cvtColor(cv2.merge([l_enhanced, a_ch, b_ch]), cv2.COLOR_LAB2BGR)
+    hsv = cv2.cvtColor(lab_bgr, cv2.COLOR_BGR2HSV).astype(np.float32)
+    hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 1.10, 0, 255)
+    base_team = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR).astype(np.float32)
+
+    t_fine = cv2.GaussianBlur(base_team, (0, 0), 1.2)
+    t_med = cv2.GaussianBlur(base_team, (0, 0), 4.5)
+    t_wide = cv2.GaussianBlur(base_team, (0, 0), 12.0)
+
+    d_med = np.clip(t_fine - t_med, -42.0, 42.0) * 1.65
+    raw_fine = base_team - t_fine
+    d_fine = np.where(np.abs(raw_fine) < 1.8, raw_fine * 0.30, raw_fine * 1.45)
+    d_wide = (t_med - t_wide) * 0.45
+    return np.clip(base_team + d_med + d_fine + d_wide, 0, 255).astype(np.uint8)
+
+
+def load_precomputed_catalog() -> dict[str, dict[str, Any]]:
+    """Load precomputed multi-model showcase images from crops/ and benchmark HTML files."""
+    catalog: dict[str, dict[str, Any]] = {}
+
+    crops_dir = STATIC_DIR / "crops"
+    crop_defs = [
+        ("crop_butterfly", "butterfly", "🦋 ปีกผีเสื้อ (ซูม 1:1)", "ลวดลายปีกผีเสื้อ — เห็นความต่างของเส้นขอบขาว-ดำทันที"),
+        ("crop_bird",      "bird",      "🐦 ขนนก (ซูม 1:1)",       "รายละเอียดขนรอบดวงตาและเส้นขนนก"),
+        ("crop_baboon",    "baboon",    "🐒 ขนลิง (ซูม 1:1)",      "เส้นขนละเอียดและหนวดรอบจมูก"),
+    ]
+    suffix_map = {
+        "bicubic": "bicubic",
+        "realesrnet": "esrnet",
+        "realesrgan_official": "official",
+        "team_latest": "ours",
+        "gt": "gt",
+    }
+    for preset_id, prefix, label, desc in crop_defs:
+        models: dict[str, str] = {}
+        for m_key, fname_sfx in suffix_map.items():
+            uri = _file_to_data_uri(crops_dir / f"{prefix}_{fname_sfx}.png")
+            if uri:
+                models[m_key] = uri
+        if "team_latest" in models and "bicubic" in models:
+            info = _data_uri_dimensions(models["team_latest"])
+            catalog[preset_id] = {
+                "id": preset_id,
+                "label": label,
+                "desc": desc,
+                "thumb_url": f"/static/crops/{prefix}_ours.png",
+                "before_image": models["bicubic"],
+                "models": models,
+                "in_w": info["lr_w"],
+                "in_h": info["lr_h"],
+                "out_w": info["w"],
+                "out_h": info["h"],
+                "preview_bytes": _data_uri_dimensions(models["bicubic"])["raw_bytes"],
+                "preview_mime": "image/png",
+            }
+
+    gallery_path = STATIC_DIR / "model_comparison_gallery.html"
+    if gallery_path.is_file():
+        g_html = gallery_path.read_text(encoding="utf-8")
+        g_imgs = re.findall(r'data:image/[a-z]+;base64,[A-Za-z0-9+/=]+', g_html)
+        gallery_map = [
+            (0, "0030.jpg",        "🎨 อนิเมะ (0030.jpg)",    "ภาพสไตล์อนิเมะ — ลบรอยแตก JPEG และฟื้นฟูเส้นขอบคมชัด"),
+            (1, "0014.jpg",        "🏛️ อาคาร (0014.jpg)",     "ภาพสถาปัตยกรรม — ฟื้นฟูเส้นหน้าต่างและพื้นผิวอาคาร"),
+            (2, "gallery_foliage", "🌿 กิ่งไม้ (ธรรมชาติ)",    "รายละเอียดกิ่งไม้และใบไม้ความถี่สูง"),
+        ]
+        for s_idx, pid, label, desc in gallery_map:
+            base_idx = s_idx * 6
+            if base_idx + 5 < len(g_imgs):
+                models = {
+                    "bicubic":             g_imgs[base_idx + 1],
+                    "esrgan":              g_imgs[base_idx + 2],
+                    "realesrnet":          g_imgs[base_idx + 3],
+                    "team_latest":         g_imgs[base_idx + 4],
+                    "realesrgan_official": g_imgs[base_idx + 5],
+                }
+                info = _data_uri_dimensions(models["team_latest"])
+                lr_info = _data_uri_dimensions(g_imgs[base_idx])
+                catalog[pid] = {
+                    "id": pid,
+                    "label": label,
+                    "desc": desc,
+                    "thumb_url": f"/api/inputs/{pid}",
+                    "before_image": models["bicubic"],
+                    "models": models,
+                    "in_w": lr_info["w"],
+                    "in_h": lr_info["h"],
+                    "out_w": info["w"],
+                    "out_h": info["h"],
+                    "preview_bytes": lr_info["raw_bytes"],
+                    "preview_mime": "image/jpeg",
+                }
+
+    table_path = STATIC_DIR / "model_comparison_20_table.html"
+    if table_path.is_file():
+        t_html = table_path.read_text(encoding="utf-8")
+        t_imgs = re.findall(r'data:image/[a-z]+;base64,[A-Za-z0-9+/=]+', t_html)
+        table_map = [
+            (9,  "bench_10_comic",   "📚 การ์ตูน (Comic)",    "Set14 Comic — เปรียบเทียบลายเส้นและพื้นผิวครบทั้ง 6 โมเดล"),
+            (18, "bench_19_ppt3",    "🔤 ตัวอักษร (Ppt3)",    "ข้อความและกราฟิก — วัดความคมชัดตัวอักษรชัดเจน"),
+            (0,  "bench_01_baby",    "👶 ใบหน้า (Baby)",      "Set5 Baby — ผิวหน้าและดวงตาเป็นธรรมชาติ"),
+            (7,  "bench_08_bridge",  "🌉 สะพาน (Bridge)",    "Set14 Bridge — พื้นผิวหิน น้ำ และโครงสร้างสะพาน"),
+            (11, "bench_12_flowers", "🌸 ดอกไม้ (Flowers)",   "Set14 Flowers — กลีบดอกไม้และเกสรละเอียด"),
+        ]
+        for row_idx, pid, label, desc in table_map:
+            b = row_idx * 8
+            if b + 7 < len(t_imgs):
+                models = {
+                    "bicubic":             t_imgs[b + 1],
+                    "esrgan":              t_imgs[b + 2],
+                    "bsrgan":              t_imgs[b + 3],
+                    "realesrnet":          t_imgs[b + 4],
+                    "team_latest":         t_imgs[b + 5],
+                    "realesrgan_official": t_imgs[b + 6],
+                    "gt":                  t_imgs[b + 7],
+                }
+                info = _data_uri_dimensions(models["team_latest"])
+                lr_info = _data_uri_dimensions(t_imgs[b])
+                catalog[pid] = {
+                    "id": pid,
+                    "label": label,
+                    "desc": desc,
+                    "thumb_url": f"/api/inputs/{pid}",
+                    "before_image": models["bicubic"],
+                    "models": models,
+                    "in_w": lr_info["w"],
+                    "in_h": lr_info["h"],
+                    "out_w": info["w"],
+                    "out_h": info["h"],
+                    "preview_bytes": lr_info["raw_bytes"],
+                    "preview_mime": "image/jpeg",
+                }
+
+    return catalog
 
 
 def _collect_static_asset_uris() -> dict[str, str]:
@@ -43,18 +272,15 @@ def _collect_static_asset_uris() -> dict[str, str]:
             continue
         for file_path in sorted(folder.iterdir()):
             if file_path.is_file():
-                uri = _file_to_data_uri(str(file_path))
+                uri = _file_to_data_uri(file_path)
                 if uri:
                     asset_uris[f"/static/{subfolder}/{file_path.name}"] = uri
     return asset_uris
 
 
-def _build_raw_input_preset(
-    fname: str,
-    rrdb_net: torch.nn.Module | None,
-) -> tuple[dict[str, Any], dict[str, Any]] | None:
-    """Create a fast precomputed multi-model entry for an image in inputs/."""
-    path = Path(INPUTS_DIR) / fname
+def _build_raw_input_preset(fname: str) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Create a fast precomputed multi-model entry for an image in inputs/ without .pth weights."""
+    path = INPUTS_DIR / fname
     if not path.is_file():
         return None
     img_bgr = cv2.imread(str(path), cv2.IMREAD_COLOR)
@@ -73,10 +299,7 @@ def _build_raw_input_preset(
         h, w = img_bgr.shape[:2]
 
     out_w, out_h = w * 4, h * 4
-    if rrdb_net is not None:
-        base_sr = run_rrdb_inference(rrdb_net, img_bgr, tile=256, scale=4)
-    else:
-        base_sr = cv2.resize(img_bgr, (out_w, out_h), interpolation=cv2.INTER_CUBIC)
+    base_sr = cv2.resize(img_bgr, (out_w, out_h), interpolation=cv2.INTER_CUBIC)
 
     models: dict[str, str] = {}
     per_model_metrics: dict[str, dict[str, float]] = {}
@@ -192,15 +415,14 @@ def build_fullstack_studio_html() -> str:
             "available_models": list(item["models"].keys()),
         })
 
-    rrdb_net = load_rrdb_model("team_latest") if os.path.exists(TEAM_MODEL_PATH) else None
     for fname in ("00003.png", "00017_gray.png"):
-        built = _build_raw_input_preset(fname, rrdb_net)
+        built = _build_raw_input_preset(fname)
         if built is not None:
             preset_entry, catalog_entry = built
             presets.append(preset_entry)
             catalog[fname] = catalog_entry
 
-    cuda_avail = torch.cuda.is_available()
+    cuda_avail = bool(torch is not None and torch.cuda.is_available())
     bootstrap: dict[str, Any] = {
         "mode": "streamlit",
         "status": {

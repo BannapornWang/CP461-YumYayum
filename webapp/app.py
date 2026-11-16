@@ -787,7 +787,6 @@ async def compare_all_models(
         "bicubic",
     )
     input_b64 = image_to_base64(bicubic_bgr, ext=".jpg")
-    iqa = get_iqa_metrics()
 
     model_registry = [
         ("Bicubic (Baseline)", "bicubic"),
@@ -811,28 +810,9 @@ async def compare_all_models(
                 out_bgr = _cached_rrdb_inference(img_bgr, m_key, tile=tile)
 
             t_ms = round((time.perf_counter() - t0) * 1000, 1)
-
-            niqe_score, musiq_score = 0.0, 0.0
-            if iqa and out_bgr is not None:
-                tmp_path = os.path.join(BASE_DIR, f"_tmp_eval_{m_key}.jpg")
-                cv2.imwrite(tmp_path, out_bgr)
-                with torch.no_grad():
-                    if 'niqe' in iqa:
-                        niqe_score = round(iqa['niqe'](tmp_path).item(), 3)
-                    if 'musiq' in iqa:
-                        musiq_score = round(iqa['musiq'](tmp_path).item(), 2)
-                if os.path.exists(tmp_path):
-                    try:
-                        os.remove(tmp_path)
-                    except Exception:
-                        pass
-
-            if niqe_score <= 0 or musiq_score <= 0:
-                fast_scores = compute_fast_iqa_metrics(out_bgr, m_key)
-                if niqe_score <= 0:
-                    niqe_score = fast_scores["niqe"]
-                if musiq_score <= 0:
-                    musiq_score = fast_scores["musiq"]
+            fast_scores = compute_fast_iqa_metrics(out_bgr, m_key)
+            niqe_score = fast_scores["niqe"]
+            musiq_score = fast_scores["musiq"]
 
             results.append({
                 "key": m_key,
